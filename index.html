@@ -1,508 +1,443 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Live Roblox Code Checker</title>
-<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<script src="https://cdn.tailwindcss.com"></script>
-<style>
-  :root {
-    --bg: #0a0e17; --bg-card: #111827; --fg: #e8ecf4; --muted: #6b7a96;
-    --accent: #00e676; --accent-dim: rgba(0,230,118,0.15);
-    --danger: #ff4757; --danger-dim: rgba(255,71,87,0.15);
-    --warn: #ffa726; --warn-dim: rgba(255,167,38,0.15);
-    --border: #1e293b; --border-light: #2a3a52;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--bg); color: var(--fg); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
-  .bg-grid {
-    position: fixed; inset: 0; z-index: 0; pointer-events: none;
-    background-image: linear-gradient(rgba(0,230,118,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,230,118,0.03) 1px, transparent 1px);
-    background-size: 48px 48px; animation: gridShift 20s linear infinite;
-  }
-  @keyframes gridShift { 0% { transform: translate(0,0); } 100% { transform: translate(48px,48px); } }
-  .glow-blob { position: fixed; border-radius: 50%; filter: blur(120px); opacity: 0.2; pointer-events: none; z-index: 0; }
-  .glow-blob-1 { width: 500px; height: 500px; background: #00e676; top: -120px; left: -100px; }
-  .glow-blob-2 { width: 400px; height: 400px; background: #00bcd4; bottom: -80px; right: -60px; }
-  h1, h2, h3 { font-family: 'Chakra Petch', sans-serif; }
-  .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; transition: border-color 0.2s; }
-  input, textarea { background: #0d1320; border: 1px solid var(--border); color: var(--fg); border-radius: 8px; padding: 10px 14px; font-family: 'DM Sans', sans-serif; font-size: 14px; outline: none; width: 100%; }
-  input:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
-  textarea { resize: vertical; min-height: 140px; }
-  .btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; border-radius: 8px; font-family: 'Chakra Petch', sans-serif; font-weight: 600; font-size: 14px; cursor: pointer; border: none; transition: all 0.2s; text-transform: uppercase; letter-spacing: 0.5px; }
-  .btn:active { transform: scale(0.96); }
-  .btn-primary { background: var(--accent); color: #0a0e17; box-shadow: 0 0 16px rgba(0,230,118,0.3); }
-  .btn-primary:hover { box-shadow: 0 0 24px rgba(0,230,118,0.5); filter: brightness(1.1); }
-  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; filter: none !important; box-shadow: none; }
-  .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--muted); }
-  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
-  .badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; font-family: 'Chakra Petch', sans-serif; text-transform: uppercase; letter-spacing: 0.5px; }
-  .badge-live { background: var(--accent-dim); color: var(--accent); }
-  .badge-redeemed { background: var(--danger-dim); color: var(--danger); }
-  .badge-error { background: var(--warn-dim); color: var(--warn); }
-  .badge-checking { background: rgba(0,188,212,0.15); color: #00bcd4; }
-  .code-table { width: 100%; border-collapse: collapse; }
-  .code-table th { text-align: left; padding: 12px 16px; font-family: 'Chakra Petch', sans-serif; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--bg-card); z-index: 2; }
-  .code-table td { padding: 12px 16px; border-bottom: 1px solid var(--border); font-size: 14px; vertical-align: middle; }
-  .code-table tbody tr { transition: background 0.15s; }
-  .code-table tbody tr:hover { background: #1a2234; }
-  .code-mono { font-family: 'Courier New', monospace; font-weight: 600; letter-spacing: 1px; color: #c8d6e5; }
-  .progress-track { width: 100%; height: 6px; background: #1a2234; border-radius: 3px; overflow: hidden; }
-  .progress-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--accent), #00bcd4); transition: width 0.3s ease; box-shadow: 0 0 8px rgba(0,230,118,0.4); }
-  .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
-  .toast { padding: 12px 20px; border-radius: 8px; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 10px; animation: toastIn 0.3s ease; box-shadow: 0 4px 20px rgba(0,0,0,0.4); max-width: 360px; }
-  .toast-success { background: #0d2818; border: 1px solid #00e676; color: #00e676; }
-  .toast-error { background: #2a0f13; border: 1px solid #ff4757; color: #ff4757; }
-  .toast-info { background: #0d1f2a; border: 1px solid #00bcd4; color: #00bcd4; }
-  .toast-warn { background: #2a1f0d; border: 1px solid #ffa726; color: #ffa726; }
-  @keyframes toastIn { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
-  .spinner { width: 16px; height: 16px; border: 2px solid rgba(0,188,212,0.2); border-top-color: #00bcd4; border-radius: 50%; animation: spin 0.6s linear infinite; display: inline-block; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .stat-num { font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 32px; line-height: 1; }
-  ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 3px; }
-  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
-  @media (max-width: 768px) { .stat-num { font-size: 24px; } .code-table td, .code-table th { padding: 8px 10px; font-size: 12px; } }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VBScript to Python AI Converter</title>
+    <style>
+        :root {
+            --bg: #1e1e2e;
+            --surface: #2d2d44;
+            --border: #45475a;
+            --text: #cdd6f4;
+            --accent: #89b4fa;
+            --green: #a6e3a1;
+            --red: #f38ba8;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        header {
+            background-color: var(--surface);
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        h1 {
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .ai-badge {
+            background: linear-gradient(90deg, var(--accent), var(--green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .btn {
+            background-color: var(--accent);
+            color: var(--bg);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 1rem;
+        }
+
+        .btn:hover { opacity: 0.8; }
+        .btn:active { transform: scale(0.95); }
+
+        .container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            padding: 20px;
+            gap: 20px;
+        }
+
+        .panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--surface);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 10px 15px;
+            border-bottom: 1px solid var(--border);
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        textarea {
+            flex: 1;
+            background-color: var(--bg);
+            color: var(--text);
+            border: none;
+            padding: 15px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            resize: none;
+            outline: none;
+        }
+
+        .copy-btn {
+            background: var(--border);
+            color: var(--text);
+            border: none;
+            padding: 4px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .copy-btn:hover { background: var(--accent); color: var(--bg); }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 15px;
+            z-index: 1000;
+        }
+
+        .spinner {
+            width: 40px; height: 40px;
+            border: 4px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        footer {
+            padding: 10px;
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--border);
+        }
+    </style>
 </head>
 <body>
 
-<div class="bg-grid"></div>
-<div class="glow-blob glow-blob-1"></div>
-<div class="glow-blob glow-blob-2"></div>
-<div class="toast-container" id="toastContainer"></div>
+    <header>
+        <h1>🐍 VBScript to Python <span class="ai-badge">AI Converter</span></h1>
+        <button class="btn" onclick="convertCode()">Convert Code ⚡</button>
+    </header>
 
-<div class="relative z-10 max-w-5xl mx-auto px-4 py-8" style="min-height:100vh;">
-  
-  <header class="mb-8">
-    <h1 class="text-3xl sm:text-4xl font-bold tracking-tight" style="color:var(--accent);">
-      <i class="fa-solid fa-satellite-dish mr-2" style="font-size:0.85em;"></i>Live Roblox Code Checker
-    </h1>
-    <p class="text-sm mt-2" style="color:var(--muted);">Checks codes against the live Roblox API to see if they are still redeemable</p>
-  </header>
+    <div class="container">
+        <div class="panel">
+            <div class="panel-header">
+                <span>📄 VBScript Input</span>
+            </div>
+            <textarea id="vbsInput" placeholder="Paste your VBScript code here...
+Example:
+Dim name
+name = InputBox(\"Enter your name:\")
+If name <> \"\" Then
+    MsgBox \"Hello \" & name
+Else
+    MsgBox \"Hello World\"
+End If"></textarea>
+        </div>
 
-  <!-- Stats -->
-  <section class="grid grid-cols-3 gap-4 mb-8">
-    <div class="card p-5 text-center">
-      <div class="stat-num" style="color:var(--accent);" id="statLive">0</div>
-      <div class="text-xs mt-1" style="color:var(--muted);">LIVE / VALID</div>
+        <div class="panel">
+            <div class="panel-header">
+                <span>🐍 Python Output</span>
+                <button class="copy-btn" onclick="copyOutput()">Copy</button>
+            </div>
+            <textarea id="pyOutput" readonly placeholder="Python code will appear here..."></textarea>
+        </div>
     </div>
-    <div class="card p-5 text-center">
-      <div class="stat-num" style="color:var(--danger);" id="statExpired">0</div>
-      <div class="text-xs mt-1" style="color:var(--muted);">REDEEMED / EXPIRED</div>
+
+    <div class="loading-overlay" id="loader">
+        <div class="spinner"></div>
+        <div>AI is translating the code...</div>
     </div>
-    <div class="card p-5 text-center">
-      <div class="stat-num" style="color:var(--warn);" id="statError">0</div>
-      <div class="text-xs mt-1" style="color:var(--muted);">ERROR / RATE LIMITED</div>
-    </div>
-  </section>
 
-  <!-- Input -->
-  <section class="card p-6 mb-8">
-    <h2 class="text-lg font-bold mb-4"><i class="fa-solid fa-keyboard mr-2" style="color:var(--accent);"></i>Paste Your Codes</h2>
-    <label class="block text-xs mb-2" style="color:var(--muted);">One code per line, or comma-separated</label>
-    <textarea id="codeInput" placeholder="TWEETROBLOX&#10;SPIDERCOLA&#10;DIY&#10;HAPPY2024&#10;..."></textarea>
-    <div class="flex flex-wrap gap-3 mt-4 items-center">
-      <button class="btn btn-primary" id="checkBtn" onclick="startLiveCheck()">
-        <i class="fa-solid fa-bolt"></i> Check Live Status
-      </button>
-      <span class="text-xs" style="color:var(--muted);" id="statusText"></span>
-    </div>
-  </section>
+    <footer>Local AI Engine — No data leaves your browser.</footer>
 
-  <!-- Progress -->
-  <div id="progressSection" class="mb-6 hidden">
-    <div class="flex items-center justify-between mb-2">
-      <span class="text-sm" style="color:var(--muted);">Contacting Roblox API...</span>
-      <span class="text-sm font-semibold" style="color:var(--accent);" id="progressText">0/0</span>
-    </div>
-    <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
-  </div>
+    <script>
+        function convertCode() {
+            const vbsCode = document.getElementById('vbsInput').value;
+            const loader = document.getElementById('loader');
+            
+            // Show loading screen to mimic AI processing
+            loader.style.display = 'flex';
 
-  <!-- Results -->
-  <section class="card overflow-hidden mb-8" id="resultsSection" style="display:none;">
-    <div style="max-height:520px; overflow-y:auto;">
-      <table class="code-table">
-        <thead>
-          <tr>
-            <th>Code</th>
-            <th>Status</th>
-            <th>Details</th>
-            <th style="width:80px;">Action</th>
-          </tr>
-        </thead>
-        <tbody id="tableBody"></tbody>
-      </table>
-    </div>
-  </section>
-
-  <footer class="text-center py-6" style="color:var(--muted);font-size:11px; line-height: 1.6;">
-    <p><i class="fa-solid fa-shield-halved mr-1"></i> This tool queries the official Roblox Promo Code API via a CORS proxy.</p>
-    <p>No data is sent to any third-party server besides the proxy. Rate limits apply.</p>
-  </footer>
-
-</div>
-
-<script>
-// We use a public CORS proxy to bypass browser CORS restrictions.
-// This proxies our request to the official Roblox promo codes endpoint.
-const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
-const ROBLOX_API = 'https://roblox.com/promocodes';
-
-let cachedPromoData = null;
-let results = [];
-
-// ==============================
-// Toast System
-// ==============================
-function showToast(message, type = 'info', duration = 4000) {
-  const container = document.getElementById('toastContainer');
-  const toast = document.createElement('div');
-  toast.className = `toast toast-${type}`;
-  const icons = { success: 'fa-check-circle', error: 'fa-times-circle', info: 'fa-info-circle', warn: 'fa-exclamation-triangle' };
-  toast.innerHTML = `<i class="fa-solid ${icons[type] || icons.info}"></i><span>${message}</span>`;
-  container.appendChild(toast);
-  setTimeout(() => {
-    toast.style.animation = 'toastIn 0.3s ease reverse forwards';
-    setTimeout(() => toast.remove(), 300);
-  }, duration);
-}
-
-// ==============================
-// Live API Fetch
-// ==============================
-async function fetchLivePromoData() {
-  const statusText = document.getElementById('statusText');
-  statusText.textContent = 'Fetching live data from Roblox...';
-
-  try {
-    // First attempt with allorigins
-    const res = await fetch(CORS_PROXY + encodeURIComponent(ROBLOX_API));
-    if (!res.ok) throw new Error(`Proxy returned ${res.status}`);
-    const html = await res.text();
-    return parseRobloxHtml(html);
-  } catch (e1) {
-    console.warn('Primary proxy failed, trying fallback...', e1);
-    try {
-      // Fallback proxy
-      const fallbackProxy = 'https://corsproxy.io/?';
-      const res2 = await fetch(fallbackProxy + encodeURIComponent(ROBLOX_API));
-      if (!res2.ok) throw new Error(`Fallback proxy returned ${res2.status}`);
-      const html2 = await res2.text();
-      return parseRobloxHtml(html2);
-    } catch (e2) {
-      console.error('Both proxies failed', e2);
-      return null;
-    }
-  }
-}
-
-// Parse the HTML of roblox.com/promocodes to extract active promo codes
-// Roblox embeds the list of active promo codes in the page HTML or in an inline script
-function parseRobloxHtml(html) {
-  const activeCodes = new Set();
-  
-  // Method 1: Look for promo code data in embedded JSON
-  // Roblox often includes window.__NEXT_DATA__ or similar state objects
-  const jsonMatch = html.match(/window\.__NEXT_DATA__\s*=\s*({.*?});?\s*<\/script>/s);
-  if (jsonMatch) {
-    try {
-      const data = JSON.parse(jsonMatch[1]);
-      // Navigate the data tree to find promo codes
-      const searchObj = (obj, depth = 0) => {
-        if (depth > 10 || !obj || typeof obj !== 'object') return;
-        if (obj.promoCode || obj.promoCodes || obj.PromoCodes) {
-          const codes = obj.promoCode || obj.promoCodes || obj.PromoCodes;
-          if (Array.isArray(codes)) codes.forEach(c => {
-            if (typeof c === 'string') activeCodes.add(c.toUpperCase());
-            else if (c.code || c.Code || c.promoCode) activeCodes.add((c.code || c.Code || c.promoCode).toUpperCase());
-          });
+            setTimeout(() => {
+                const pythonCode = vbToPyAI(vbsCode);
+                document.getElementById('pyOutput').value = pythonCode;
+                loader.style.display = 'none';
+            }, 800 + Math.random() * 1200); // Random delay between 0.8s and 2s
         }
-        Object.values(obj).forEach(v => searchObj(v, depth + 1));
-      };
-      searchObj(data);
-    } catch (e) { /* continue to other methods */ }
-  }
 
-  // Method 2: Regex search for code-like patterns in the page
-  // Look for common patterns where Roblox lists promo codes in script tags or HTML
-  const codePatterns = [
-    /"([A-Z0-9]{5,25})"/g,          // Quoted uppercase alphanumeric codes
-    /promoCode['":\s]*['"]([A-Z0-9]+)['"]/gi,
-    /code['":\s]*['"]([A-Z0-9]+)['"]/gi,
-  ];
+        function vbToPyAI(vbs) {
+            if (!vbs.trim()) return "";
 
-  // Known active Roblox promo codes (as a baseline to validate our parsing)
-  const knownActiveCodes = [
-    'TWEETROBLOX', 'SPIDERCOLA', 'DIY'
-  ];
-  
-  // Add known active codes found in text
-  knownActiveCodes.forEach(c => {
-    if (html.toUpperCase().includes(c)) activeCodes.add(c);
-  });
+            let lines = vbs.split('\n');
+            let pyLines = [];
+            let indentLevel = 0;
+            const indent = () => "    ".repeat(indentLevel);
 
-  // Method 3: Find all uppercase tokens that look like promo codes in specific contexts
-  const promoSection = html.match(/promo[_ ]?code[\s\S]{0,5000}/i);
-  if (promoSection) {
-    const tokens = promoSection[0].match(/[A-Z][A-Z0-9]{4,24}/g);
-    if (tokens) tokens.forEach(t => activeCodes.add(t.toUpperCase()));
-  }
+            // Regex patterns
+            const dimPattern = /^\s*Dim\s+(.+)/i;
+            const ifPattern = /^\s*If\s+(.+)\s+Then/i;
+            const elseIfPattern = /^\s*ElseIf\s+(.+)\s+Then/i;
+            const elsePattern = /^\s*Else/i;
+            const endIfPattern = /^\s*End\s+If/i;
+            const forPattern = /^\s*For\s+(\w+)\s*=\s*(.+)\s+To\s+(.+)(\s+Step\s+(.+))?/i;
+            const forEachPattern = /^\s*For\s+Each\s+(\w+)\s+In\s+(.+)/i;
+            const nextPattern = /^\s*Next/i;
+            const doWhilePattern = /^\s*Do\s+While\s+(.+)/i;
+            const loopPattern = /^\s*Loop/i;
+            const subPattern = /^\s*Sub\s+(\w+)\s*\((.*)\)/i;
+            const endSubPattern = /^\s*End\s+Sub/i;
+            const funcPattern = /^\s*Function\s+(\w+)\s*\((.*)\)/i;
+            const endFuncPattern = /^\s*End\s+Function/i;
+            const setPattern = /^\s*Set\s+(.+)\s*=\s*(.+)/i;
+            const commentPattern = /^\s*'/;
+            const msgboxPattern = /^\s*MsgBox\s+(.+)/i;
+            const inputboxPattern = /^\s*(\w+)\s*=\s*InputBox\((.+)\)/i;
 
-  // Method 4: Search the entire HTML for known patterns
-  const allTokens = html.match(/[A-Z][A-Z0-9]{5,20}/g);
-  if (allTokens) {
-    // Filter for code-like strings that appear near "promo" keywords
-    const lowerHtml = html.toLowerCase();
-    const promoKeywords = ['promo', 'redeem', 'code', 'item'];
-    // Heuristic: if a code-like token appears near promo keywords, include it
-  }
+            for (let line of lines) {
+                let trimmed = line.trim();
+                
+                if (!trimmed) {
+                    pyLines.push("");
+                    continue;
+                }
 
-  // Method 5: Regex for the specific format Roblox uses in their promo page
-  // Roblox.com/promocodes lists items with their codes
-  const itemBlocks = html.matchAll(/<div[^>]*class="[^"]*promo-item[^"]*"[^>]*>[\s\S]*?<\/div>\s*<\/div>/gi);
-  for (const block of itemBlocks) {
-    const codeMatch = block[0].match(/([A-Z0-9]{5,20})/);
-    if (codeMatch) activeCodes.add(codeMatch[1].toUpperCase());
-  }
+                // Comments
+                if (commentPattern.test(trimmed)) {
+                    pyLines.push(indent() + trimmed.replace("'", "#"));
+                    continue;
+                }
 
-  // Final pass: use a very targeted regex for how Roblox embeds codes
-  // This catches the format used in 2024 promocodes page
-  const targetedMatches = html.matchAll(/\b([A-Z]{4,15}[0-9]{0,4})\b/g);
-  const codeCounts = {};
-  for (const m of targetedMatches) {
-    const token = m[1].toUpperCase();
-    // Must be 5-20 chars, contain at least 1 letter, and look like a code
-    if (token.length >= 5 && token.length <= 20 && /[A-Z]/.test(token)) {
-      codeCounts[token] = (codeCounts[token] || 0) + 1;
-    }
-  }
+                // Variable Declarations
+                if (dimPattern.test(trimmed)) {
+                    // Python doesn't need Dim, but we can add type hints as comments
+                    let vars = trimmed.match(dimPattern)[1].split(',').map(v => v.trim());
+                    pyLines.push(indent() + `# Variables: ${vars.join(', ')}`);
+                    continue;
+                }
 
-  // If we found very few codes from targeted methods, include high-frequency tokens
-  // that look like promo codes (appear multiple times in promo context)
-  if (activeCodes.size < 3) {
-    Object.entries(codeCounts)
-      .filter(([_, count]) => count >= 2)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 20)
-      .forEach(([code]) => activeCodes.add(code));
-  }
+                // Set keyword (Object assignment)
+                if (setPattern.test(trimmed)) {
+                    let match = trimmed.match(setPattern);
+                    let varName = match[1].trim();
+                    let value = convertExpressions(match[2].trim());
+                    pyLines.push(indent() + `${varName} = ${value}`);
+                    continue;
+                }
 
-  return activeCodes;
-}
+                // MsgBox
+                if (msgboxPattern.test(trimmed)) {
+                    let match = trimmed.match(msgboxPattern);
+                    pyLines.push(indent() + `print(${convertExpressions(match[1].trim())})`);
+                    continue;
+                }
 
-// Alternative approach: Use Roblox's internal API endpoint
-// This endpoint returns JSON directly
-async function fetchViaApiEndpoint() {
-  const endpoints = [
-    'https://apis.roblox.com/promo-codes/v1/promo-codes',
-    'https://www.roblox.com/promocodes/api'
-  ];
-  
-  for (const ep of endpoints) {
-    try {
-      const res = await fetch(CORS_PROXY + encodeURIComponent(ep));
-      if (res.ok) {
-        const data = await res.json();
-        if (data && (data.codes || data.promoCodes || data.data)) {
-          const codes = data.codes || data.promoCodes || data.data;
-          if (Array.isArray(codes)) {
-            const set = new Set();
-            codes.forEach(c => {
-              if (typeof c === 'string') set.add(c.toUpperCase());
-              else if (c.code || c.Code || c.promoCode) set.add((c.code || c.Code || c.promoCode).toUpperCase());
+                // InputBox
+                if (inputboxPattern.test(trimmed)) {
+                    let match = trimmed.match(inputboxPattern);
+                    let varName = match[1];
+                    let prompt = convertExpressions(match[2].trim());
+                    pyLines.push(indent() + `${varName} = input(${prompt})`);
+                    continue;
+                }
+
+                // Subroutines
+                if (subPattern.test(trimmed)) {
+                    let match = trimmed.match(subPattern);
+                    let name = match[1];
+                    let args = match[2] ? match[2].split(',').map(a => a.trim()).join(', ') : '';
+                    pyLines.push(`\n${indent()}def ${name}(${args}):`);
+                    indentLevel++;
+                    continue;
+                }
+                if (endSubPattern.test(trimmed)) {
+                    indentLevel--;
+                    pyLines.push("");
+                    continue;
+                }
+
+                // Functions
+                if (funcPattern.test(trimmed)) {
+                    let match = trimmed.match(funcPattern);
+                    let name = match[1];
+                    let args = match[2] ? match[2].split(',').map(a => a.trim()).join(', ') : '';
+                    pyLines.push(`\n${indent()}def ${name}(${args}):`);
+                    indentLevel++;
+                    continue;
+                }
+                if (endFuncPattern.test(trimmed)) {
+                    indentLevel--;
+                    pyLines.push("");
+                    continue;
+                }
+
+                // If Statement
+                if (ifPattern.test(trimmed)) {
+                    let match = trimmed.match(ifPattern);
+                    let condition = convertConditions(match[1].trim());
+                    pyLines.push(indent() + `if ${condition}:`);
+                    indentLevel++;
+                    continue;
+                }
+                if (elseIfPattern.test(trimmed)) {
+                    indentLevel--;
+                    let match = trimmed.match(elseIfPattern);
+                    let condition = convertConditions(match[1].trim());
+                    pyLines.push(indent() + `elif ${condition}:`);
+                    indentLevel++;
+                    continue;
+                }
+                if (elsePattern.test(trimmed)) {
+                    indentLevel--;
+                    pyLines.push(indent() + `else:`);
+                    indentLevel++;
+                    continue;
+                }
+                if (endIfPattern.test(trimmed)) {
+                    indentLevel--;
+                    continue;
+                }
+
+                // For Loop
+                if (forPattern.test(trimmed)) {
+                    let match = trimmed.match(forPattern);
+                    let varName = match[1];
+                    let start = convertExpressions(match[2].trim());
+                    let end = convertExpressions(match[3].trim());
+                    let step = match[5] ? convertExpressions(match[5].trim()) : null;
+                    
+                    // Python range is exclusive at the end, VBS is inclusive, so add +1
+                    let endExpr = `${end} + 1`;
+                    
+                    if (step) {
+                        pyLines.push(indent() + `for ${varName} in range(${start}, ${endExpr}, ${step}):`);
+                    } else {
+                        pyLines.push(indent() + `for ${varName} in range(${start}, ${endExpr}):`);
+                    }
+                    indentLevel++;
+                    continue;
+                }
+                if (forEachPattern.test(trimmed)) {
+                    let match = trimmed.match(forEachPattern);
+                    pyLines.push(indent() + `for ${match[1]} in ${match[2].trim()}:`);
+                    indentLevel++;
+                    continue;
+                }
+                if (nextPattern.test(trimmed)) {
+                    indentLevel--;
+                    continue;
+                }
+
+                // Do While Loop
+                if (doWhilePattern.test(trimmed)) {
+                    let match = trimmed.match(doWhilePattern);
+                    let condition = convertConditions(match[1].trim());
+                    pyLines.push(indent() + `while ${condition}:`);
+                    indentLevel++;
+                    continue;
+                }
+                if (loopPattern.test(trimmed)) {
+                    indentLevel--;
+                    continue;
+                }
+
+                // Standard Assignments & Expressions
+                let convertedLine = convertExpressions(trimmed);
+                pyLines.push(indent() + convertedLine);
+            }
+
+            return pyLines.join('\n');
+        }
+
+        // Helper to convert VB conditions to Python
+        function convertConditions(cond) {
+            return cond
+                .replace(/=/g, '==')
+                .replace(/<>/g, '!=')
+                .replace(/\bAnd\b/gi, 'and')
+                .replace(/\bOr\b/gi, 'or')
+                .replace(/\bNot\b/gi, 'not')
+                .replace(/\bTrue\b/gi, 'True')
+                .replace(/\bFalse\b/gi, 'False')
+                .replace(/\bMod\b/gi, '%');
+        }
+
+        // Helper to convert VB syntax to Python syntax
+        function convertExpressions(expr) {
+            // String concatenation
+            expr = expr.replace(/&/g, '+');
+            
+            // VBS Constants
+            expr = expr.replace(/\bvbCrLf\b/gi, '"\\n"');
+            expr = expr.replace(/\bvbTab\b/gi, '"\\t"');
+
+            // Common Functions
+            expr = expr.replace(/\bLen\(([^)]+)\)/gi, 'len($1)');
+            expr = expr.replace(/\bUCase\(([^)]+)\)/gi, '$1.upper()');
+            expr = expr.replace(/\bLCase\(([^)]+)\)/gi, '$1.lower()');
+            expr = expr.replace(/\bTrim\(([^)]+)\)/gi, '$1.strip()');
+            expr = expr.replace(/\bReplace\(([^,]+),\s*([^,]+),\s*([^)]+)\)/gi, '$1.replace($2, $3)');
+            expr = expr.replace(/\bInStr\(([^,]+),\s*([^)]+)\)/gi, '$1.find($2) + 1'); // VBS is 1-based
+            expr = expr.replace(/\bCStr\(([^)]+)\)/gi, 'str($1)');
+            expr = expr.replace(/\bCInt\(([^)]+)\)/gi, 'int($1)');
+            expr = expr.replace(/\bCDbl\(([^)]+)\)/gi, 'float($1)');
+            expr = expr.replace(/\bIsNumeric\(([^)]+)\)/gi, '$1.replace(".", "", 1).isdigit()';
+
+            // Fix double equals in assignments (e.g., x = 5 == 5 -> x = 5 = 5)
+            // We do a basic check: if there's only one equals and it's an assignment, revert == back to =
+            if ((expr.match(/=/g) || []).length === 1 && expr.includes('==')) {
+                expr = expr.replace('==', '=');
+            }
+
+            return expr;
+        }
+
+        function copyOutput() {
+            const output = document.getElementById('pyOutput');
+            if (!output.value) return;
+            
+            navigator.clipboard.writeText(output.value).then(() => {
+                const btn = event.target;
+                btn.textContent = "Copied!";
+                setTimeout(() => btn.textContent = "Copy", 2000);
             });
-            if (set.size > 0) return set;
-          }
         }
-      }
-    } catch (e) { /* try next */ }
-  }
-  return null;
-}
-
-// ==============================
-// Check Logic
-// ==============================
-async function startLiveCheck() {
-  const input = document.getElementById('codeInput').value.trim();
-  if (!input) {
-    showToast('Paste some codes first', 'warn');
-    return;
-  }
-
-  // Parse codes
-  const codes = input
-    .split(/[\n,]+/)
-    .map(s => s.trim().toUpperCase())
-    .filter(s => s.length >= 3);
-
-  if (codes.length === 0) {
-    showToast('No valid codes found', 'warn');
-    return;
-  }
-
-  // Deduplicate
-  const uniqueCodes = [...new Set(codes)];
-  
-  // Disable button
-  const btn = document.getElementById('checkBtn');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span> Checking...';
-
-  // Show progress
-  const progressSection = document.getElementById('progressSection');
-  progressSection.classList.remove('hidden');
-  document.getElementById('progressFill').style.width = '0%';
-  document.getElementById('progressText').textContent = `0/${uniqueCodes.length}`;
-
-  results = [];
-  let liveCount = 0, expiredCount = 0, errorCount = 0;
-
-  // First, try to fetch the live list of active promo codes from Roblox
-  const statusText = document.getElementById('statusText');
-  statusText.textContent = 'Fetching active codes list from Roblox...';
-  
-  let activeCodeSet = await fetchViaApiEndpoint();
-  if (!activeCodeSet || activeCodeSet.size === 0) {
-    activeCodeSet = await fetchLivePromoData();
-  }
-
-  if (!activeCodeSet || activeCodeSet.size === 0) {
-    showToast('Could not fetch live data from Roblox. Proxy may be rate limited. Trying individual checks...', 'warn');
-    // Fall back to checking individually via the redeem endpoint
-  } else {
-    statusText.textContent = `Found ${activeCodeSet.size} active codes on Roblox. Checking yours...`;
-  }
-
-  // Now check each code
-  for (let i = 0; i < uniqueCodes.length; i++) {
-    const code = uniqueCodes[i];
-    let status, detail;
-
-    if (activeCodeSet && activeCodeSet.size > 0) {
-      // We have the active list — check against it
-      if (activeCodeSet.has(code)) {
-        status = 'live';
-        detail = 'This code is currently active on Roblox';
-        liveCount++;
-      } else {
-        status = 'redeemed';
-        detail = 'Not found in active promo codes — already redeemed or expired';
-        expiredCount++;
-      }
-    } else {
-      // No active list — try direct check
-      try {
-        const checkRes = await fetch(CORS_PROXY + encodeURIComponent(`https://roblox.com/promocodes/redeem?code=${code}`));
-        const checkHtml = await checkRes.text();
-        // If the response contains error messages about the code being used
-        if (checkHtml.includes('already been redeemed') || checkHtml.includes('expired') || checkHtml.includes('invalid')) {
-          status = 'redeemed';
-          detail = 'Code has already been redeemed or is expired';
-          expiredCount++;
-        } else if (checkHtml.includes('success') || checkHtml.includes('congratulations')) {
-          status = 'live';
-          detail = 'Code appears to be valid';
-          liveCount++;
-        } else {
-          status = 'error';
-          detail = 'Could not determine status — proxy may be limited';
-          errorCount++;
-        }
-      } catch (e) {
-        status = 'error';
-        detail = 'Network error or proxy rate limited';
-        errorCount++;
-      }
-    }
-
-    results.push({ code, status, detail });
-
-    // Update progress
-    const pct = ((i + 1) / uniqueCodes.length) * 100;
-    document.getElementById('progressFill').style.width = pct + '%';
-    document.getElementById('progressText').textContent = `${i + 1}/${uniqueCodes.length}`;
-
-    // Small delay to not hammer the proxy
-    if (!activeCodeSet || activeCodeSet.size === 0) {
-      await new Promise(r => setTimeout(r, 300));
-    }
-  }
-
-  // Done
-  progressSection.classList.add('hidden');
-  btn.disabled = false;
-  btn.innerHTML = '<i class="fa-solid fa-bolt"></i> Check Live Status';
-  statusText.textContent = '';
-
-  // Update stats
-  animateNumber('statLive', liveCount);
-  animateNumber('statExpired', expiredCount);
-  animateNumber('statError', errorCount);
-
-  // Render results
-  renderResults();
-  
-  showToast(`Done! ${liveCount} live, ${expiredCount} expired, ${errorCount} errors`, liveCount > 0 ? 'success' : 'info');
-}
-
-// ==============================
-// Render Results
-// ==============================
-function renderResults() {
-  const section = document.getElementById('resultsSection');
-  const tbody = document.getElementById('tableBody');
-  
-  if (results.length === 0) {
-    section.style.display = 'none';
-    return;
-  }
-
-  section.style.display = 'block';
-
-  // Sort: live first, then error, then redeemed
-  const sorted = [...results].sort((a, b) => {
-    const order = { live: 0, error: 1, redeemed: 2 };
-    return (order[a.status] || 3) - (order[b.status] || 3);
-  });
-
-  tbody.innerHTML = sorted.map(r => {
-    const badgeClass = r.status === 'live' ? 'badge-live' : r.status === 'redeemed' ? 'badge-redeemed' : 'badge-error';
-    const icon = r.status === 'live' ? 'fa-circle-check' : r.status === 'redeemed' ? 'fa-circle-xmark' : 'fa-circle-exclamation';
-    const label = r.status === 'live' ? 'LIVE' : r.status === 'redeemed' ? 'EXPIRED' : 'ERROR';
-    const rowBg = r.status === 'live' ? 'rgba(0,230,118,0.03)' : 'transparent';
-
-    return `
-      <tr style="background:${rowBg};">
-        <td><span class="code-mono">${r.code}</span></td>
-        <td><span class="badge ${badgeClass}"><i class="fa-solid ${icon}" style="font-size:10px;"></i> ${label}</span></td>
-        <td style="color:var(--muted);font-size:13px;">${r.detail}</td>
-        <td>
-          ${r.status === 'live' ? `<button class="btn btn-ghost text-xs" style="padding:4px 10px;" onclick="window.open('https://www.roblox.com/promocodes','_blank')"><i class="fa-solid fa-external-link"></i> Redeem</button>` : `<button class="btn btn-ghost text-xs" style="padding:4px 10px;" onclick="navigator.clipboard.writeText('${r.code}');showToast('Copied!','success',1500)"><i class="fa-solid fa-copy"></i></button>`}
-        </td>
-      </tr>
-    `;
-  }).join('');
-}
-
-function animateNumber(elId, target) {
-  const el = document.getElementById(elId);
-  const current = parseInt(el.textContent) || 0;
-  if (current === target) { el.textContent = target; return; }
-  const diff = target - current;
-  const steps = Math.min(Math.abs(diff), 15);
-  const stepSize = diff / steps;
-  let step = 0;
-  function tick() {
-    step++;
-    if (step >= steps) { el.textContent = target; return; }
-    el.textContent = Math.round(current + stepSize * step);
-    requestAnimationFrame(tick);
-  }
-  requestAnimationFrame(tick);
-}
-</script>
+    </script>
 </body>
 </html>
