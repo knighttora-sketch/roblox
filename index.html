@@ -1,443 +1,1079 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VBScript to Python AI Converter</title>
+    <title>CineVault — Movie Streaming Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;400;600;800;900&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
         :root {
-            --bg: #1e1e2e;
-            --surface: #2d2d44;
-            --border: #45475a;
-            --text: #cdd6f4;
-            --accent: #89b4fa;
-            --green: #a6e3a1;
-            --red: #f38ba8;
+            --bg: #0a0a0f;
+            --bg-elevated: #12121a;
+            --card: #1a1a26;
+            --card-hover: #22222f;
+            --border: #2a2a3a;
+            --fg: #e8e8f0;
+            --muted: #7a7a8e;
+            --accent: #e6a817;
+            --accent-glow: rgba(230, 168, 23, 0.3);
+            --danger: #e84057;
+            --success: #2dd4a0;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg);
+            color: var(--fg);
+            min-height: 100vh;
+            overflow-x: hidden;
         }
 
-        header {
-            background-color: var(--surface);
-            padding: 15px 20px;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
+        h1, h2, h3, h4 { font-family: 'Space Grotesk', sans-serif; }
 
-        h1 {
-            font-size: 1.2rem;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .ai-badge {
-            background: linear-gradient(90deg, var(--accent), var(--green));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            font-weight: bold;
-            font-size: 0.9rem;
-        }
-
-        .btn {
-            background-color: var(--accent);
-            color: var(--bg);
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.2s;
-            font-size: 1rem;
-        }
-
-        .btn:hover { opacity: 0.8; }
-        .btn:active { transform: scale(0.95); }
-
-        .container {
-            display: flex;
-            flex: 1;
-            overflow: hidden;
-            padding: 20px;
-            gap: 20px;
-        }
-
-        .panel {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            background-color: var(--surface);
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            overflow: hidden;
-        }
-
-        .panel-header {
-            padding: 10px 15px;
-            border-bottom: 1px solid var(--border);
-            font-weight: bold;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        textarea {
-            flex: 1;
-            background-color: var(--bg);
-            color: var(--text);
-            border: none;
-            padding: 15px;
-            font-family: 'Consolas', 'Courier New', monospace;
-            font-size: 14px;
-            line-height: 1.5;
-            resize: none;
-            outline: none;
-        }
-
-        .copy-btn {
-            background: var(--border);
-            color: var(--text);
-            border: none;
-            padding: 4px 10px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.8rem;
-        }
-
-        .copy-btn:hover { background: var(--accent); color: var(--bg); }
-
-        .loading-overlay {
+        /* Ambient background */
+        .ambient-bg {
             position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.7);
-            display: none;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        .ambient-bg::before {
+            content: '';
+            position: absolute;
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+            top: -200px; right: -100px;
+            animation: ambientFloat 12s ease-in-out infinite alternate;
+        }
+        .ambient-bg::after {
+            content: '';
+            position: absolute;
+            width: 500px; height: 500px;
+            background: radial-gradient(circle, rgba(100, 50, 200, 0.12) 0%, transparent 70%);
+            bottom: -150px; left: -100px;
+            animation: ambientFloat 15s ease-in-out infinite alternate-reverse;
+        }
+        @keyframes ambientFloat {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(80px, 60px) scale(1.2); }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+        /* Film grain overlay */
+        .grain {
+            position: fixed;
+            inset: 0;
+            z-index: 1;
+            pointer-events: none;
+            opacity: 0.03;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+        }
+
+        /* Card animations */
+        .movie-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .movie-card:hover {
+            transform: translateY(-6px) scale(1.02);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.5), 0 0 20px var(--accent-glow);
+        }
+
+        /* Toast */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .toast {
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            animation: toastIn 0.4s ease, toastOut 0.4s ease 2.6s forwards;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+        }
+        @keyframes toastIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes toastOut { from { opacity: 1; } to { opacity: 0; transform: translateY(-10px); } }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(8px);
+            display: flex;
             align-items: center;
             justify-content: center;
-            flex-direction: column;
-            gap: 15px;
-            z-index: 1000;
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        .modal-content {
+            animation: slideUp 0.35s ease;
         }
 
-        .spinner {
-            width: 40px; height: 40px;
-            border: 4px solid var(--border);
-            border-top-color: var(--accent);
+        /* Input focus */
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--accent) !important;
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        /* Badge pulse */
+        .badge-new::after {
+            content: '';
+            position: absolute;
+            top: -2px; right: -2px;
+            width: 8px; height: 8px;
+            background: var(--danger);
             border-radius: 50%;
-            animation: spin 1s linear infinite;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+        /* Player shimmer */
+        .shimmer {
+            background: linear-gradient(110deg, var(--card) 30%, var(--card-hover) 50%, var(--card) 70%);
+            background-size: 200% 100%;
+            animation: shimmer 1.8s infinite;
+        }
+        @keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+
+        /* Nav active indicator */
+        .nav-link.active {
+            color: var(--accent);
+        }
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 20px;
+            height: 3px;
+            background: var(--accent);
+            border-radius: 2px;
         }
 
-        @keyframes spin { to { transform: rotate(360deg); } }
+        /* Star rating */
+        .star-btn { transition: color 0.15s, transform 0.15s; }
+        .star-btn:hover { transform: scale(1.2); }
 
-        footer {
-            padding: 10px;
-            text-align: center;
-            font-size: 0.8rem;
-            color: var(--border);
+        /* Responsive player */
+        .player-wrapper {
+            position: relative;
+            width: 100%;
+            padding-bottom: 56.25%;
+            background: var(--bg);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .player-wrapper iframe {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* Tab indicator animation */
+        .tab-btn {
+            position: relative;
+            transition: color 0.2s;
+        }
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0; right: 0;
+            height: 2px;
+            background: var(--accent);
+            border-radius: 1px;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.01ms !important;
+            }
         }
     </style>
 </head>
 <body>
 
-    <header>
-        <h1>🐍 VBScript to Python <span class="ai-badge">AI Converter</span></h1>
-        <button class="btn" onclick="convertCode()">Convert Code ⚡</button>
-    </header>
+<div class="ambient-bg"></div>
+<div class="grain"></div>
+<div class="toast-container" id="toastContainer"></div>
 
-    <div class="container">
-        <div class="panel">
-            <div class="panel-header">
-                <span>📄 VBScript Input</span>
+<!-- NAVIGATION -->
+<nav style="background: rgba(10,10,15,0.9); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border);" class="fixed top-0 left-0 right-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between h-16">
+        <div class="flex items-center gap-3 cursor-pointer" onclick="showSection('home')">
+            <div style="background: var(--accent); width: 36px; height: 36px; border-radius: 8px;" class="flex items-center justify-center">
+                <i class="fas fa-film text-black text-sm"></i>
             </div>
-            <textarea id="vbsInput" placeholder="Paste your VBScript code here...
-Example:
-Dim name
-name = InputBox(\"Enter your name:\")
-If name <> \"\" Then
-    MsgBox \"Hello \" & name
-Else
-    MsgBox \"Hello World\"
-End If"></textarea>
+            <h1 class="text-xl font-bold tracking-tight" style="font-family: 'Space Grotesk';">Cine<span style="color: var(--accent);">Vault</span></h1>
         </div>
-
-        <div class="panel">
-            <div class="panel-header">
-                <span>🐍 Python Output</span>
-                <button class="copy-btn" onclick="copyOutput()">Copy</button>
+        <div class="hidden sm:flex items-center gap-6">
+            <button class="nav-link active relative text-sm font-semibold pb-1" onclick="showSection('home')" id="navHome">Beranda</button>
+            <button class="nav-link relative text-sm font-semibold pb-1" style="color: var(--muted);" onclick="showSection('upload')" id="navUpload">Upload Film</button>
+            <button class="nav-link relative text-sm font-semibold pb-1" style="color: var(--muted);" onclick="showSection('manage')" id="navManage">Kelola Film</button>
+        </div>
+        <div class="flex items-center gap-3">
+            <div class="relative">
+                <input type="text" id="searchInput" placeholder="Cari film..." oninput="searchMovies()" class="text-sm px-4 py-2 pl-9 rounded-lg" style="background: var(--card); border: 1px solid var(--border); color: var(--fg); width: 200px;">
+                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-xs" style="color: var(--muted);"></i>
             </div>
-            <textarea id="pyOutput" readonly placeholder="Python code will appear here..."></textarea>
+            <!-- Mobile menu -->
+            <button class="sm:hidden" style="color: var(--muted);" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
         </div>
     </div>
-
-    <div class="loading-overlay" id="loader">
-        <div class="spinner"></div>
-        <div>AI is translating the code...</div>
+    <!-- Mobile menu dropdown -->
+    <div id="mobileMenu" class="hidden sm:hidden px-4 pb-3" style="background: rgba(10,10,15,0.95);">
+        <button class="block w-full text-left py-2 text-sm font-semibold" style="color: var(--accent);" onclick="showSection('home'); toggleMobileMenu();">Beranda</button>
+        <button class="block w-full text-left py-2 text-sm font-semibold" style="color: var(--muted);" onclick="showSection('upload'); toggleMobileMenu();">Upload Film</button>
+        <button class="block w-full text-left py-2 text-sm font-semibold" style="color: var(--muted);" onclick="showSection('manage'); toggleMobileMenu();">Kelola Film</button>
     </div>
+</nav>
 
-    <footer>Local AI Engine — No data leaves your browser.</footer>
+<main class="relative z-10 pt-16">
 
-    <script>
-        function convertCode() {
-            const vbsCode = document.getElementById('vbsInput').value;
-            const loader = document.getElementById('loader');
-            
-            // Show loading screen to mimic AI processing
-            loader.style.display = 'flex';
+    <!-- HOME SECTION -->
+    <section id="sectionHome">
+        <!-- Hero -->
+        <div class="relative overflow-hidden" style="min-height: 420px;">
+            <div class="absolute inset-0" style="background: linear-gradient(135deg, rgba(230,168,23,0.08) 0%, transparent 50%, rgba(100,50,200,0.06) 100%);"></div>
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-24 relative">
+                <div class="max-w-2xl">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold mb-4" style="background: var(--accent-glow); color: var(--accent); border: 1px solid rgba(230,168,23,0.3);">
+                        <i class="fas fa-sparkles"></i>
+                        Portal Streaming Film
+                    </div>
+                    <h2 class="text-4xl sm:text-5xl lg:text-6xl font-black leading-tight mb-4" style="font-family: 'Space Grotesk';">
+                        Nonton Film<br>
+                        <span style="color: var(--accent);">Favorit Kamu</span>
+                    </h2>
+                    <p class="text-base sm:text-lg mb-8" style="color: var(--muted); max-width: 480px;">
+                        Koleksi film terlengkap. Upload dan streaming film via iframe dengan mudah. Kelola semua film di satu tempat.
+                    </p>
+                    <div class="flex flex-wrap gap-3">
+                        <button onclick="showSection('upload')" class="px-6 py-3 rounded-lg font-semibold text-sm text-black flex items-center gap-2" style="background: var(--accent); transition: transform 0.2s;" onmouseenter="this.style.transform='scale(1.05)'" onmouseleave="this.style.transform='scale(1)'">
+                            <i class="fas fa-plus"></i> Upload Film
+                        </button>
+                        <button onclick="document.getElementById('movieGrid').scrollIntoView({behavior:'smooth'})" class="px-6 py-3 rounded-lg font-semibold text-sm flex items-center gap-2" style="background: var(--card); border: 1px solid var(--border); color: var(--fg); transition: transform 0.2s;" onmouseenter="this.style.transform='scale(1.05)'" onmouseleave="this.style.transform='scale(1)'">
+                            <i class="fas fa-play"></i> Jelajahi Koleksi
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-            setTimeout(() => {
-                const pythonCode = vbToPyAI(vbsCode);
-                document.getElementById('pyOutput').value = pythonCode;
-                loader.style.display = 'none';
-            }, 800 + Math.random() * 1200); // Random delay between 0.8s and 2s
+        <!-- Stats bar -->
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 -mt-4 mb-8">
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div class="rounded-xl p-4 text-center" style="background: var(--card); border: 1px solid var(--border);">
+                    <div class="text-2xl font-black" style="color: var(--accent);" id="statTotal">0</div>
+                    <div class="text-xs" style="color: var(--muted);">Total Film</div>
+                </div>
+                <div class="rounded-xl p-4 text-center" style="background: var(--card); border: 1px solid var(--border);">
+                    <div class="text-2xl font-black" style="color: var(--success);" id="statActive">0</div>
+                    <div class="text-xs" style="color: var(--muted);">Aktif</div>
+                </div>
+                <div class="rounded-xl p-4 text-center" style="background: var(--card); border: 1px solid var(--border);">
+                    <div class="text-2xl font-black" style="color: var(--fg);" id="statCategories">0</div>
+                    <div class="text-xs" style="color: var(--muted);">Kategori</div>
+                </div>
+                <div class="rounded-xl p-4 text-center" style="background: var(--card); border: 1px solid var(--border);">
+                    <div class="text-2xl font-black" style="color: var(--danger);" id="statViews">0</div>
+                    <div class="text-xs" style="color: var(--muted);">Total Views</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Category filter -->
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 mb-6">
+            <div class="flex items-center gap-2 overflow-x-auto pb-2" id="categoryFilters" style="scrollbar-width: none;">
+                <!-- Generated by JS -->
+            </div>
+        </div>
+
+        <!-- Movie Grid -->
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 pb-16" id="movieGrid">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5" id="movieGridInner">
+                <!-- Generated by JS -->
+            </div>
+            <div id="emptyState" class="hidden text-center py-20">
+                <i class="fas fa-film text-5xl mb-4" style="color: var(--border);"></i>
+                <p class="text-lg font-semibold mb-2" style="color: var(--muted);">Belum ada film</p>
+                <p class="text-sm mb-6" style="color: var(--border);">Upload film pertama kamu sekarang</p>
+                <button onclick="showSection('upload')" class="px-5 py-2 rounded-lg text-sm font-semibold text-black" style="background: var(--accent);">
+                    <i class="fas fa-plus mr-2"></i>Upload Film
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- UPLOAD SECTION -->
+    <section id="sectionUpload" class="hidden">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 py-12">
+            <div class="mb-8">
+                <h2 class="text-3xl font-black mb-2" style="font-family: 'Space Grotesk';">Upload Film Baru</h2>
+                <p style="color: var(--muted);">Tambahkan film dengan embed iframe dari platform streaming mana saja.</p>
+            </div>
+
+            <form id="uploadForm" onsubmit="handleUpload(event)" class="space-y-6">
+                <!-- Judul -->
+                <div>
+                    <label class="block text-sm font-semibold mb-2">Judul Film <span style="color: var(--danger);">*</span></label>
+                    <input type="text" id="formTitle" required placeholder="Contoh: Interstellar" class="w-full px-4 py-3 rounded-lg text-sm" style="background: var(--card); border: 1px solid var(--border); color: var(--fg);">
+                </div>
+
+                <!-- Iframe URL -->
+                <div>
+                    <label class="block text-sm font-semibold mb-2">URL Iframe <span style="color: var(--danger);">*</span></label>
+                    <div class="relative">
+                        <input type="url" id="formIframe" required placeholder="https://stream.example.com/embed/abc123" class="w-full px-4 py-3 pr-12 rounded-lg text-sm" style="background: var(--card); border: 1px solid var(--border); color: var(--fg);">
+                        <button type="button" onclick="previewIframe()" class="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 rounded text-xs font-semibold" style="background: var(--accent); color: black;" title="Preview iframe">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                    <p class="text-xs mt-1" style="color: var(--muted);">Tempel URL embed iframe dari player streaming (Vidsrc, MultiEmbed, dll)</p>
+                </div>
+
+                <!-- Iframe Preview -->
+                <div id="iframePreviewBox" class="hidden">
+                    <label class="block text-sm font-semibold mb-2">Preview Iframe</label>
+                    <div class="player-wrapper" style="border: 1px solid var(--border);">
+                        <iframe id="previewIframeEl" sandbox="allow-scripts allow-same-origin allow-presentation" loading="lazy"></iframe>
+                    </div>
+                    <button type="button" onclick="document.getElementById('iframePreviewBox').classList.add('hidden')" class="mt-2 text-xs font-semibold" style="color: var(--danger);">Tutup Preview</button>
+                </div>
+
+                <!-- Poster URL & Kategori (2 kolom) -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">URL Poster Gambar</label>
+                        <input type="url" id="formPoster" placeholder="https://image.tmdb.org/t/p/w500/..." class="w-full px-4 py-3 rounded-lg text-sm" style="background: var(--card); border: 1px solid var(--border); color: var(--fg);">
+                        <p class="text-xs mt-1" style="color: var(--muted);">Kosongkan untuk auto-generate</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">Kategori <span style="color: var(--danger);">*</span></label>
+                        <select id="formCategory" required class="w-full px-4 py-3 rounded-lg text-sm" style="background: var(--card); border: 1px solid var(--border); color: var(--fg);">
+                            <option value="">Pilih kategori</option>
+                            <option value="Action">Action</option>
+                            <option value="Drama">Drama</option>
+                            <option value="Sci-Fi">Sci-Fi</option>
+                            <option value="Horror">Horror</option>
+                            <option value="Comedy">Comedy</option>
+                            <option value="Thriller">Thriller</option>
+                            <option value="Romance">Romance</option>
+                            <option value="Animation">Animation</option>
+                            <option value="Documentary">Documentary</option>
+                            <option value="Anime">Anime</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Tahun & Rating (2 kolom) -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">Tahun</label>
+                        <input type="number" id="formYear" placeholder="2024" min="1900" max="2030" class="w-full px-4 py-3 rounded-lg text-sm" style="background: var(--card); border: 1px solid var(--border); color: var(--fg);">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">Rating (1-10)</label>
+                        <div class="flex items-center gap-1 py-3" id="ratingStars">
+                            <!-- Generated by JS -->
+                        </div>
+                        <input type="hidden" id="formRating" value="0">
+                    </div>
+                </div>
+
+                <!-- Deskripsi -->
+                <div>
+                    <label class="block text-sm font-semibold mb-2">Deskripsi / Sinopsis</label>
+                    <textarea id="formDesc" rows="3" placeholder="Tulis sinopsis singkat film..." class="w-full px-4 py-3 rounded-lg text-sm resize-none" style="background: var(--card); border: 1px solid var(--border); color: var(--fg);"></textarea>
+                </div>
+
+                <!-- Iframe Code (advanced) -->
+                <details class="rounded-lg" style="background: var(--card); border: 1px solid var(--border);">
+                    <summary class="px-4 py-3 text-sm font-semibold cursor-pointer flex items-center gap-2" style="color: var(--muted);">
+                        <i class="fas fa-code"></i> Mode Lanjutan — Tempel Kode Iframe Langsung
+                    </summary>
+                    <div class="px-4 pb-4">
+                        <textarea id="formIframeCode" rows="4" placeholder='<iframe src="https://..." width="100%" height="100%" allowfullscreen></iframe>' class="w-full px-4 py-3 rounded-lg text-sm resize-none font-mono" style="background: var(--bg); border: 1px solid var(--border); color: var(--fg);"></textarea>
+                        <p class="text-xs mt-1" style="color: var(--muted);">Jika diisi, kode ini akan dipakai sebagai ganti URL iframe di atas</p>
+                    </div>
+                </details>
+
+                <!-- Submit -->
+                <div class="flex items-center gap-3 pt-2">
+                    <button type="submit" class="px-8 py-3 rounded-lg font-bold text-sm text-black flex items-center gap-2" style="background: var(--accent); transition: transform 0.2s, box-shadow 0.2s;" onmouseenter="this.style.boxShadow='0 0 24px var(--accent-glow)'" onmouseleave="this.style.boxShadow='none'">
+                        <i class="fas fa-cloud-upload-alt"></i> Upload Film
+                    </button>
+                    <button type="button" onclick="resetForm()" class="px-6 py-3 rounded-lg font-semibold text-sm" style="background: var(--card); border: 1px solid var(--border); color: var(--muted);">
+                        Reset
+                    </button>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <!-- MANAGE SECTION -->
+    <section id="sectionManage" class="hidden">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 py-12">
+            <div class="flex items-center justify-between mb-8">
+                <div>
+                    <h2 class="text-3xl font-black mb-2" style="font-family: 'Space Grotesk';">Kelola Film</h2>
+                    <p style="color: var(--muted);">Edit, hapus, atau kelola semua film yang sudah diupload.</p>
+                </div>
+                <button onclick="exportData()" class="px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-2" style="background: var(--card); border: 1px solid var(--border); color: var(--muted);">
+                    <i class="fas fa-download"></i> Export JSON
+                </button>
+            </div>
+
+            <!-- Import -->
+            <div class="mb-6 p-4 rounded-lg flex flex-wrap items-center gap-3" style="background: var(--card); border: 1px solid var(--border);">
+                <i class="fas fa-upload text-sm" style="color: var(--muted);"></i>
+                <span class="text-sm" style="color: var(--muted);">Import data film:</span>
+                <input type="file" id="importFile" accept=".json" onchange="importData(event)" class="text-sm" style="color: var(--muted);">
+            </div>
+
+            <!-- Movie list table -->
+            <div class="rounded-xl overflow-hidden" style="background: var(--card); border: 1px solid var(--border);">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr style="background: var(--bg-elevated); border-bottom: 1px solid var(--border);">
+                                <th class="text-left px-4 py-3 font-semibold" style="color: var(--muted);">Film</th>
+                                <th class="text-left px-4 py-3 font-semibold hidden sm:table-cell" style="color: var(--muted);">Kategori</th>
+                                <th class="text-left px-4 py-3 font-semibold hidden md:table-cell" style="color: var(--muted);">Tahun</th>
+                                <th class="text-left px-4 py-3 font-semibold" style="color: var(--muted);">Status</th>
+                                <th class="text-right px-4 py-3 font-semibold" style="color: var(--muted);">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="manageTableBody">
+                            <!-- Generated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="manageEmpty" class="hidden text-center py-12">
+                    <i class="fas fa-inbox text-3xl mb-3" style="color: var(--border);"></i>
+                    <p class="text-sm" style="color: var(--muted);">Belum ada film untuk dikelola</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+</main>
+
+<!-- PLAYER MODAL -->
+<div id="playerModal" class="hidden">
+    <div class="modal-overlay" onclick="closePlayer(event)">
+        <div class="modal-content w-full max-w-5xl mx-4" onclick="event.stopPropagation()">
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="text-lg font-bold" id="playerTitle">Judul Film</h3>
+                <button onclick="closePlayer()" class="w-8 h-8 rounded-lg flex items-center justify-center" style="background: var(--card); color: var(--muted);">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="player-wrapper" style="border: 1px solid var(--border);" id="playerWrapper">
+                <!-- iframe injected here -->
+            </div>
+            <div class="mt-3 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <span class="text-xs px-2 py-1 rounded" style="background: var(--card); color: var(--muted);" id="playerCategory">Action</span>
+                    <span class="text-xs" style="color: var(--muted);" id="playerYear">2024</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="copyIframeUrl()" class="px-3 py-1 rounded text-xs font-semibold flex items-center gap-1" style="background: var(--card); border: 1px solid var(--border); color: var(--muted);">
+                        <i class="fas fa-link"></i> Copy URL
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- EDIT MODAL -->
+<div id="editModal" class="hidden">
+    <div class="modal-overlay" onclick="closeEditModal()">
+        <div class="modal-content w-full max-w-lg mx-4 p-6 rounded-xl" style="background: var(--bg-elevated); border: 1px solid var(--border);" onclick="event.stopPropagation()">
+            <h3 class="text-xl font-bold mb-6">Edit Film</h3>
+            <form id="editForm" onsubmit="handleEdit(event)" class="space-y-4">
+                <input type="hidden" id="editId">
+                <div>
+                    <label class="block text-xs font-semibold mb-1" style="color: var(--muted);">Judul</label>
+                    <input type="text" id="editTitle" required class="w-full px-3 py-2 rounded-lg text-sm" style="background: var(--card); border: 1px solid var(--border); color: var(--fg);">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold mb-1" style="color: var(--muted);">URL Iframe</label>
+                    <input type="url" id="editIframe" required class="w-full px-3 py-2 rounded-lg text-sm" style="background: var(--card); border: 1px solid var(--border); color: var(--fg);">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold mb-1" style="color: var(--muted);">Kategori</label>
+                        <select id="editCategory" required class="w-full px-3 py-2 rounded-lg text-sm" style="background: var(--card); border: 1px solid var(--border); color: var(--fg);">
+                            <option value="Action">Action</option>
+                            <option value="Drama">Drama</option>
+                            <option value="Sci-Fi">Sci-Fi</option>
+                            <option value="Horror">Horror</option>
+                            <option value="Comedy">Comedy</option>
+                            <option value="Thriller">Thriller</option>
+                            <option value="Romance">Romance</option>
+                            <option value="Animation">Animation</option>
+                            <option value="Documentary">Documentary</option>
+                            <option value="Anime">Anime</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold mb-1" style="color: var(--muted);">Tahun</label>
+                        <input type="number" id="editYear" class="w-full px-3 py-2 rounded-lg text-sm" style="background: var(--card); border: 1px solid var(--border); color: var(--fg);">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold mb-1" style="color: var(--muted);">Poster URL</label>
+                    <input type="url" id="editPoster" class="w-full px-3 py-2 rounded-lg text-sm" style="background: var(--card); border: 1px solid var(--border); color: var(--fg);">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold mb-1" style="color: var(--muted);">Deskripsi</label>
+                    <textarea id="editDesc" rows="2" class="w-full px-3 py-2 rounded-lg text-sm resize-none" style="background: var(--card); border: 1px solid var(--border); color: var(--fg);"></textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold mb-1" style="color: var(--muted);">Iframe Code (lanjutan)</label>
+                    <textarea id="editIframeCode" rows="2" class="w-full px-3 py-2 rounded-lg text-sm resize-none font-mono" style="background: var(--card); border: 1px solid var(--border); color: var(--fg);"></textarea>
+                </div>
+                <div class="flex items-center gap-3 pt-2">
+                    <button type="submit" class="px-6 py-2 rounded-lg font-bold text-sm text-black" style="background: var(--accent);">Simpan</button>
+                    <button type="button" onclick="closeEditModal()" class="px-5 py-2 rounded-lg text-sm" style="background: var(--card); border: 1px solid var(--border); color: var(--muted);">Batal</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ===================== DATA LAYER =====================
+    const STORAGE_KEY = 'cinevault_movies';
+    let movies = [];
+    let currentFilter = 'all';
+    let currentPlayerUrl = '';
+
+    // Sample seed data
+    const sampleMovies = [
+        {
+            id: 'cv_1', title: 'Interstellar', iframeUrl: '', iframeCode: '<iframe src="https://vidsrc.xyz/embed/tt0816692" allowfullscreen></iframe>',
+            poster: 'https://picsum.photos/seed/interstellar/400/600.jpg', category: 'Sci-Fi', year: 2014, rating: 9, desc: 'Seorang petani ex-NASA melintasi wormhole untuk mencari planet baru bagi umat manusia yang terancam.', active: true, views: 1240, createdAt: Date.now() - 86400000 * 5
+        },
+        {
+            id: 'cv_2', title: 'The Dark Knight', iframeUrl: '', iframeCode: '<iframe src="https://vidsrc.xyz/embed/tt0468569" allowfullscreen></iframe>',
+            poster: 'https://picsum.photos/seed/darkknight/400/600.jpg', category: 'Action', year: 2008, rating: 9, desc: 'Batman menghadapi ancaman terbesar dari Joker yang menguji batas keadilan Gotham.', active: true, views: 980, createdAt: Date.now() - 86400000 * 3
+        },
+        {
+            id: 'cv_3', title: 'Spirited Away', iframeUrl: '', iframeCode: '<iframe src="https://vidsrc.xyz/embed/tt0245429" allowfullscreen></iframe>',
+            poster: 'https://picsum.photos/seed/spirited/400/600.jpg', category: 'Animation', year: 2001, rating: 9, desc: 'Chihiro terjebak di dunia roh dan harus bekerja di pemandian untuk menyelamatkan orang tuanya.', active: true, views: 756, createdAt: Date.now() - 86400000 * 2
+        },
+        {
+            id: 'cv_4', title: 'Parasite', iframeUrl: '', iframeCode: '<iframe src="https://vidsrc.xyz/embed/tt6751668" allowfullscreen></iframe>',
+            poster: 'https://picsum.photos/seed/parasite/400/600.jpg', category: 'Thriller', year: 2019, rating: 8, desc: 'Keluarga miskin menyusup ke kehidupan keluarga kaya dengan konsekuensi mengerikan.', active: true, views: 632, createdAt: Date.now() - 86400000
+        },
+        {
+            id: 'cv_5', title: 'Dune: Part Two', iframeUrl: '', iframeCode: '<iframe src="https://vidsrc.xyz/embed/tt15239678" allowfullscreen></iframe>',
+            poster: 'https://picsum.photos/seed/dune2/400/600.jpg', category: 'Sci-Fi', year: 2024, rating: 8, desc: 'Paul Atreides bersatu dengan Fremen untuk membalas dendam dan mencegah masa depan mengerikan.', active: true, views: 2100, createdAt: Date.now() - 3600000
+        },
+        {
+            id: 'cv_6', title: 'Oppenheimer', iframeUrl: '', iframeCode: '<iframe src="https://vidsrc.xyz/embed/tt15398776" allowfullscreen></iframe>',
+            poster: 'https://picsum.photos/seed/oppenheimer/400/600.jpg', category: 'Drama', year: 2023, rating: 8, desc: 'Kisah J. Robert Oppenheimer dan penciptaan bom atom yang mengubah dunia selamanya.', active: true, views: 1890, createdAt: Date.now() - 7200000
         }
+    ];
 
-        function vbToPyAI(vbs) {
-            if (!vbs.trim()) return "";
-
-            let lines = vbs.split('\n');
-            let pyLines = [];
-            let indentLevel = 0;
-            const indent = () => "    ".repeat(indentLevel);
-
-            // Regex patterns
-            const dimPattern = /^\s*Dim\s+(.+)/i;
-            const ifPattern = /^\s*If\s+(.+)\s+Then/i;
-            const elseIfPattern = /^\s*ElseIf\s+(.+)\s+Then/i;
-            const elsePattern = /^\s*Else/i;
-            const endIfPattern = /^\s*End\s+If/i;
-            const forPattern = /^\s*For\s+(\w+)\s*=\s*(.+)\s+To\s+(.+)(\s+Step\s+(.+))?/i;
-            const forEachPattern = /^\s*For\s+Each\s+(\w+)\s+In\s+(.+)/i;
-            const nextPattern = /^\s*Next/i;
-            const doWhilePattern = /^\s*Do\s+While\s+(.+)/i;
-            const loopPattern = /^\s*Loop/i;
-            const subPattern = /^\s*Sub\s+(\w+)\s*\((.*)\)/i;
-            const endSubPattern = /^\s*End\s+Sub/i;
-            const funcPattern = /^\s*Function\s+(\w+)\s*\((.*)\)/i;
-            const endFuncPattern = /^\s*End\s+Function/i;
-            const setPattern = /^\s*Set\s+(.+)\s*=\s*(.+)/i;
-            const commentPattern = /^\s*'/;
-            const msgboxPattern = /^\s*MsgBox\s+(.+)/i;
-            const inputboxPattern = /^\s*(\w+)\s*=\s*InputBox\((.+)\)/i;
-
-            for (let line of lines) {
-                let trimmed = line.trim();
-                
-                if (!trimmed) {
-                    pyLines.push("");
-                    continue;
-                }
-
-                // Comments
-                if (commentPattern.test(trimmed)) {
-                    pyLines.push(indent() + trimmed.replace("'", "#"));
-                    continue;
-                }
-
-                // Variable Declarations
-                if (dimPattern.test(trimmed)) {
-                    // Python doesn't need Dim, but we can add type hints as comments
-                    let vars = trimmed.match(dimPattern)[1].split(',').map(v => v.trim());
-                    pyLines.push(indent() + `# Variables: ${vars.join(', ')}`);
-                    continue;
-                }
-
-                // Set keyword (Object assignment)
-                if (setPattern.test(trimmed)) {
-                    let match = trimmed.match(setPattern);
-                    let varName = match[1].trim();
-                    let value = convertExpressions(match[2].trim());
-                    pyLines.push(indent() + `${varName} = ${value}`);
-                    continue;
-                }
-
-                // MsgBox
-                if (msgboxPattern.test(trimmed)) {
-                    let match = trimmed.match(msgboxPattern);
-                    pyLines.push(indent() + `print(${convertExpressions(match[1].trim())})`);
-                    continue;
-                }
-
-                // InputBox
-                if (inputboxPattern.test(trimmed)) {
-                    let match = trimmed.match(inputboxPattern);
-                    let varName = match[1];
-                    let prompt = convertExpressions(match[2].trim());
-                    pyLines.push(indent() + `${varName} = input(${prompt})`);
-                    continue;
-                }
-
-                // Subroutines
-                if (subPattern.test(trimmed)) {
-                    let match = trimmed.match(subPattern);
-                    let name = match[1];
-                    let args = match[2] ? match[2].split(',').map(a => a.trim()).join(', ') : '';
-                    pyLines.push(`\n${indent()}def ${name}(${args}):`);
-                    indentLevel++;
-                    continue;
-                }
-                if (endSubPattern.test(trimmed)) {
-                    indentLevel--;
-                    pyLines.push("");
-                    continue;
-                }
-
-                // Functions
-                if (funcPattern.test(trimmed)) {
-                    let match = trimmed.match(funcPattern);
-                    let name = match[1];
-                    let args = match[2] ? match[2].split(',').map(a => a.trim()).join(', ') : '';
-                    pyLines.push(`\n${indent()}def ${name}(${args}):`);
-                    indentLevel++;
-                    continue;
-                }
-                if (endFuncPattern.test(trimmed)) {
-                    indentLevel--;
-                    pyLines.push("");
-                    continue;
-                }
-
-                // If Statement
-                if (ifPattern.test(trimmed)) {
-                    let match = trimmed.match(ifPattern);
-                    let condition = convertConditions(match[1].trim());
-                    pyLines.push(indent() + `if ${condition}:`);
-                    indentLevel++;
-                    continue;
-                }
-                if (elseIfPattern.test(trimmed)) {
-                    indentLevel--;
-                    let match = trimmed.match(elseIfPattern);
-                    let condition = convertConditions(match[1].trim());
-                    pyLines.push(indent() + `elif ${condition}:`);
-                    indentLevel++;
-                    continue;
-                }
-                if (elsePattern.test(trimmed)) {
-                    indentLevel--;
-                    pyLines.push(indent() + `else:`);
-                    indentLevel++;
-                    continue;
-                }
-                if (endIfPattern.test(trimmed)) {
-                    indentLevel--;
-                    continue;
-                }
-
-                // For Loop
-                if (forPattern.test(trimmed)) {
-                    let match = trimmed.match(forPattern);
-                    let varName = match[1];
-                    let start = convertExpressions(match[2].trim());
-                    let end = convertExpressions(match[3].trim());
-                    let step = match[5] ? convertExpressions(match[5].trim()) : null;
-                    
-                    // Python range is exclusive at the end, VBS is inclusive, so add +1
-                    let endExpr = `${end} + 1`;
-                    
-                    if (step) {
-                        pyLines.push(indent() + `for ${varName} in range(${start}, ${endExpr}, ${step}):`);
-                    } else {
-                        pyLines.push(indent() + `for ${varName} in range(${start}, ${endExpr}):`);
-                    }
-                    indentLevel++;
-                    continue;
-                }
-                if (forEachPattern.test(trimmed)) {
-                    let match = trimmed.match(forEachPattern);
-                    pyLines.push(indent() + `for ${match[1]} in ${match[2].trim()}:`);
-                    indentLevel++;
-                    continue;
-                }
-                if (nextPattern.test(trimmed)) {
-                    indentLevel--;
-                    continue;
-                }
-
-                // Do While Loop
-                if (doWhilePattern.test(trimmed)) {
-                    let match = trimmed.match(doWhilePattern);
-                    let condition = convertConditions(match[1].trim());
-                    pyLines.push(indent() + `while ${condition}:`);
-                    indentLevel++;
-                    continue;
-                }
-                if (loopPattern.test(trimmed)) {
-                    indentLevel--;
-                    continue;
-                }
-
-                // Standard Assignments & Expressions
-                let convertedLine = convertExpressions(trimmed);
-                pyLines.push(indent() + convertedLine);
+    function loadMovies() {
+        try {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            if (stored) {
+                movies = JSON.parse(stored);
+            } else {
+                movies = [...sampleMovies];
+                saveMovies();
             }
+        } catch (e) {
+            movies = [...sampleMovies];
+            saveMovies();
+        }
+    }
 
-            return pyLines.join('\n');
+    function saveMovies() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(movies));
+    }
+
+    function genId() {
+        return 'cv_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+    }
+
+    // ===================== TOAST =====================
+    function showToast(message, type = 'success') {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        const colors = {
+            success: `background: var(--success); color: #000;`,
+            error: `background: var(--danger); color: #fff;`,
+            info: `background: var(--accent); color: #000;`
+        };
+        toast.style.cssText = colors[type] || colors.info;
+        toast.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}" style="margin-right: 6px;"></i>${message}`;
+        container.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
+
+    // ===================== NAVIGATION =====================
+    function showSection(name) {
+        document.getElementById('sectionHome').classList.add('hidden');
+        document.getElementById('sectionUpload').classList.add('hidden');
+        document.getElementById('sectionManage').classList.add('hidden');
+        document.getElementById('navHome').classList.remove('active');
+        document.getElementById('navHome').style.color = 'var(--muted)';
+        document.getElementById('navUpload').classList.remove('active');
+        document.getElementById('navUpload').style.color = 'var(--muted)';
+        document.getElementById('navManage').classList.remove('active');
+        document.getElementById('navManage').style.color = 'var(--muted)';
+
+        if (name === 'home') {
+            document.getElementById('sectionHome').classList.remove('hidden');
+            document.getElementById('navHome').classList.add('active');
+            document.getElementById('navHome').style.color = 'var(--accent)';
+            renderMovieGrid();
+            updateStats();
+            renderCategoryFilters();
+        } else if (name === 'upload') {
+            document.getElementById('sectionUpload').classList.remove('hidden');
+            document.getElementById('navUpload').classList.add('active');
+            document.getElementById('navUpload').style.color = 'var(--accent)';
+            renderRatingStars();
+        } else if (name === 'manage') {
+            document.getElementById('sectionManage').classList.remove('hidden');
+            document.getElementById('navManage').classList.add('active');
+            document.getElementById('navManage').style.color = 'var(--accent)';
+            renderManageTable();
+        }
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function toggleMobileMenu() {
+        document.getElementById('mobileMenu').classList.toggle('hidden');
+    }
+
+    // ===================== CATEGORY FILTERS =====================
+    function renderCategoryFilters() {
+        const container = document.getElementById('categoryFilters');
+        const categories = ['all', ...new Set(movies.map(m => m.category))];
+        container.innerHTML = categories.map(cat => `
+            <button onclick="filterByCategory('${cat}')" class="tab-btn px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap ${currentFilter === cat ? 'active' : ''}" style="background: ${currentFilter === cat ? 'var(--accent-glow)' : 'var(--card)'}; color: ${currentFilter === cat ? 'var(--accent)' : 'var(--muted)'}; border: 1px solid ${currentFilter === cat ? 'rgba(230,168,23,0.3)' : 'var(--border)'};">
+                ${cat === 'all' ? 'Semua' : cat}
+            </button>
+        `).join('');
+    }
+
+    function filterByCategory(cat) {
+        currentFilter = cat;
+        renderCategoryFilters();
+        renderMovieGrid();
+    }
+
+    // ===================== MOVIE GRID =====================
+    function renderMovieGrid() {
+        const container = document.getElementById('movieGridInner');
+        const emptyState = document.getElementById('emptyState');
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+
+        let filtered = movies.filter(m => m.active);
+        if (currentFilter !== 'all') {
+            filtered = filtered.filter(m => m.category === currentFilter);
+        }
+        if (searchTerm) {
+            filtered = filtered.filter(m => m.title.toLowerCase().includes(searchTerm) || m.category.toLowerCase().includes(searchTerm));
         }
 
-        // Helper to convert VB conditions to Python
-        function convertConditions(cond) {
-            return cond
-                .replace(/=/g, '==')
-                .replace(/<>/g, '!=')
-                .replace(/\bAnd\b/gi, 'and')
-                .replace(/\bOr\b/gi, 'or')
-                .replace(/\bNot\b/gi, 'not')
-                .replace(/\bTrue\b/gi, 'True')
-                .replace(/\bFalse\b/gi, 'False')
-                .replace(/\bMod\b/gi, '%');
+        if (filtered.length === 0) {
+            container.innerHTML = '';
+            emptyState.classList.remove('hidden');
+            return;
+        }
+        emptyState.classList.add('hidden');
+
+        container.innerHTML = filtered.map((movie, i) => {
+            const isNew = (Date.now() - movie.createdAt) < 86400000 * 2;
+            const ratingStars = '★'.repeat(Math.round(movie.rating / 2)) + '☆'.repeat(5 - Math.round(movie.rating / 2));
+            return `
+                <div class="movie-card rounded-xl overflow-hidden cursor-pointer" style="background: var(--card); border: 1px solid var(--border); animation-delay: ${i * 60}ms;" onclick="openPlayer('${movie.id}')">
+                    <div class="relative" style="aspect-ratio: 2/2.6;">
+                        <img src="${movie.poster || `https://picsum.photos/seed/${movie.id}/400/520.jpg`}" alt="${movie.title}" class="w-full h-full object-cover" loading="lazy" onerror="this.src='https://picsum.photos/seed/${movie.id}/400/520.jpg'">
+                        <div class="absolute inset-0" style="background: linear-gradient(to top, var(--card) 0%, transparent 60%);"></div>
+                        ${isNew ? `<div class="absolute top-3 left-3 px-2 py-1 rounded text-xs font-bold" style="background: var(--danger); color: white;">BARU</div>` : ''}
+                        <div class="absolute top-3 right-3 px-2 py-1 rounded text-xs font-bold" style="background: rgba(0,0,0,0.7); color: var(--accent);">${movie.category}</div>
+                        <div class="absolute bottom-3 left-3 right-3">
+                            <h3 class="text-base font-bold leading-tight mb-1" style="font-family: 'Space Grotesk';">${movie.title}</h3>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs" style="color: var(--accent);">${ratingStars}</span>
+                                <span class="text-xs" style="color: var(--muted);">${movie.year || ''}</span>
+                            </div>
+                        </div>
+                        <!-- Play overlay -->
+                        <div class="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300" style="background: rgba(0,0,0,0.5);">
+                            <div class="w-14 h-14 rounded-full flex items-center justify-center" style="background: var(--accent); box-shadow: 0 0 30px var(--accent-glow);">
+                                <i class="fas fa-play text-black text-lg ml-1"></i>
+                            </div>
+                        </div>
+                    </div>
+                    ${movie.desc ? `<div class="px-3 py-2"><p class="text-xs line-clamp-2" style="color: var(--muted);">${movie.desc}</p></div>` : ''}
+                    <div class="px-3 pb-3 flex items-center justify-between">
+                        <span class="text-xs" style="color: var(--muted);"><i class="fas fa-eye mr-1"></i>${movie.views.toLocaleString()}</span>
+                        <span class="text-xs font-semibold" style="color: var(--accent);">${movie.rating}/10</span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function searchMovies() {
+        renderMovieGrid();
+    }
+
+    // ===================== STATS =====================
+    function updateStats() {
+        document.getElementById('statTotal').textContent = movies.length;
+        document.getElementById('statActive').textContent = movies.filter(m => m.active).length;
+        document.getElementById('statCategories').textContent = new Set(movies.map(m => m.category)).size;
+        document.getElementById('statViews').textContent = movies.reduce((sum, m) => sum + m.views, 0).toLocaleString();
+    }
+
+    // ===================== RATING STARS =====================
+    function renderRatingStars() {
+        const container = document.getElementById('ratingStars');
+        const current = parseInt(document.getElementById('formRating').value) || 0;
+        container.innerHTML = '';
+        for (let i = 1; i <= 10; i++) {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'star-btn text-lg';
+            btn.style.color = i <= current ? 'var(--accent)' : 'var(--border)';
+            btn.innerHTML = i <= current ? '★' : '☆';
+            btn.onclick = () => {
+                document.getElementById('formRating').value = i;
+                renderRatingStars();
+            };
+            container.appendChild(btn);
+        }
+    }
+
+    // ===================== UPLOAD =====================
+    function handleUpload(e) {
+        e.preventDefault();
+        const title = document.getElementById('formTitle').value.trim();
+        const iframeUrl = document.getElementById('formIframe').value.trim();
+        const iframeCode = document.getElementById('formIframeCode').value.trim();
+        const poster = document.getElementById('formPoster').value.trim();
+        const category = document.getElementById('formCategory').value;
+        const year = parseInt(document.getElementById('formYear').value) || new Date().getFullYear();
+        const rating = parseInt(document.getElementById('formRating').value) || 5;
+        const desc = document.getElementById('formDesc').value.trim();
+
+        if (!title || !category) {
+            showToast('Judul dan kategori wajib diisi!', 'error');
+            return;
+        }
+        if (!iframeUrl && !iframeCode) {
+            showToast('URL Iframe atau kode iframe wajib diisi!', 'error');
+            return;
         }
 
-        // Helper to convert VB syntax to Python syntax
-        function convertExpressions(expr) {
-            // String concatenation
-            expr = expr.replace(/&/g, '+');
-            
-            // VBS Constants
-            expr = expr.replace(/\bvbCrLf\b/gi, '"\\n"');
-            expr = expr.replace(/\bvbTab\b/gi, '"\\t"');
+        const movie = {
+            id: genId(),
+            title,
+            iframeUrl,
+            iframeCode,
+            poster: poster || '',
+            category,
+            year,
+            rating,
+            desc,
+            active: true,
+            views: 0,
+            createdAt: Date.now()
+        };
+        movies.unshift(movie);
+        saveMovies();
+        showToast(`"${title}" berhasil diupload!`, 'success');
+        resetForm();
+        showSection('home');
+    }
 
-            // Common Functions
-            expr = expr.replace(/\bLen\(([^)]+)\)/gi, 'len($1)');
-            expr = expr.replace(/\bUCase\(([^)]+)\)/gi, '$1.upper()');
-            expr = expr.replace(/\bLCase\(([^)]+)\)/gi, '$1.lower()');
-            expr = expr.replace(/\bTrim\(([^)]+)\)/gi, '$1.strip()');
-            expr = expr.replace(/\bReplace\(([^,]+),\s*([^,]+),\s*([^)]+)\)/gi, '$1.replace($2, $3)');
-            expr = expr.replace(/\bInStr\(([^,]+),\s*([^)]+)\)/gi, '$1.find($2) + 1'); // VBS is 1-based
-            expr = expr.replace(/\bCStr\(([^)]+)\)/gi, 'str($1)');
-            expr = expr.replace(/\bCInt\(([^)]+)\)/gi, 'int($1)');
-            expr = expr.replace(/\bCDbl\(([^)]+)\)/gi, 'float($1)');
-            expr = expr.replace(/\bIsNumeric\(([^)]+)\)/gi, '$1.replace(".", "", 1).isdigit()';
+    function resetForm() {
+        document.getElementById('uploadForm').reset();
+        document.getElementById('formRating').value = '0';
+        document.getElementById('iframePreviewBox').classList.add('hidden');
+        renderRatingStars();
+    }
 
-            // Fix double equals in assignments (e.g., x = 5 == 5 -> x = 5 = 5)
-            // We do a basic check: if there's only one equals and it's an assignment, revert == back to =
-            if ((expr.match(/=/g) || []).length === 1 && expr.includes('==')) {
-                expr = expr.replace('==', '=');
-            }
-
-            return expr;
+    function previewIframe() {
+        const url = document.getElementById('formIframe').value.trim();
+        if (!url) {
+            showToast('Masukkan URL iframe terlebih dahulu', 'error');
+            return;
         }
+        const box = document.getElementById('iframePreviewBox');
+        const el = document.getElementById('previewIframeEl');
+        el.src = url;
+        box.classList.remove('hidden');
+        showToast('Preview iframe dimuat', 'info');
+    }
 
-        function copyOutput() {
-            const output = document.getElementById('pyOutput');
-            if (!output.value) return;
-            
-            navigator.clipboard.writeText(output.value).then(() => {
-                const btn = event.target;
-                btn.textContent = "Copied!";
-                setTimeout(() => btn.textContent = "Copy", 2000);
+    // ===================== PLAYER =====================
+    function openPlayer(id) {
+        const movie = movies.find(m => m.id === id);
+        if (!movie) return;
+
+        // Increment views
+        movie.views++;
+        saveMovies();
+
+        const modal = document.getElementById('playerModal');
+        const wrapper = document.getElementById('playerWrapper');
+        document.getElementById('playerTitle').textContent = movie.title;
+        document.getElementById('playerCategory').textContent = movie.category;
+        document.getElementById('playerYear').textContent = movie.year || '';
+
+        // Build iframe
+        let iframeHtml = '';
+        if (movie.iframeCode) {
+            iframeHtml = movie.iframeCode;
+        } else if (movie.iframeUrl) {
+            iframeHtml = `<iframe src="${movie.iframeUrl}" allowfullscreen style="position:absolute;inset:0;width:100%;height:100%;border:none;"></iframe>`;
+        }
+        wrapper.innerHTML = iframeHtml;
+
+        // Store current URL for copy
+        currentPlayerUrl = movie.iframeUrl || '';
+
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closePlayer(e) {
+        if (e && e.target !== e.currentTarget) return;
+        const modal = document.getElementById('playerModal');
+        const wrapper = document.getElementById('playerWrapper');
+        wrapper.innerHTML = '';
+        modal.classList.add('hidden');
+        document.body.style.overflow = '';
+        renderMovieGrid();
+        updateStats();
+    }
+
+    function copyIframeUrl() {
+        if (currentPlayerUrl) {
+            navigator.clipboard.writeText(currentPlayerUrl).then(() => {
+                showToast('URL berhasil disalin!', 'success');
+            }).catch(() => {
+                showToast('Gagal menyalin URL', 'error');
             });
+        } else {
+            showToast('Tidak ada URL untuk disalin', 'error');
         }
-    </script>
+    }
+
+    // ===================== MANAGE TABLE =====================
+    function renderManageTable() {
+        const tbody = document.getElementById('manageTableBody');
+        const empty = document.getElementById('manageEmpty');
+
+        if (movies.length === 0) {
+            tbody.innerHTML = '';
+            empty.classList.remove('hidden');
+            return;
+        }
+        empty.classList.add('hidden');
+
+        tbody.innerHTML = movies.map(movie => `
+            <tr style="border-bottom: 1px solid var(--border);" class="hover:bg-opacity-50">
+                <td class="px-4 py-3">
+                    <div class="flex items-center gap-3">
+                        <img src="${movie.poster || `https://picsum.photos/seed/${movie.id}/80/120.jpg`}" class="w-10 h-14 rounded object-cover" onerror="this.src='https://picsum.photos/seed/${movie.id}/80/120.jpg'">
+                        <div>
+                            <div class="font-semibold text-sm">${movie.title}</div>
+                            <div class="text-xs" style="color: var(--muted);">${movie.views.toLocaleString()} views</div>
+                        </div>
+                    </div>
+                </td>
+                <td class="px-4 py-3 hidden sm:table-cell">
+                    <span class="text-xs px-2 py-1 rounded" style="background: var(--bg); color: var(--accent);">${movie.category}</span>
+                </td>
+                <td class="px-4 py-3 hidden md:table-cell">
+                    <span class="text-xs" style="color: var(--muted);">${movie.year || '-'}</span>
+                </td>
+                <td class="px-4 py-3">
+                    <button onclick="toggleActive('${movie.id}')" class="text-xs px-2 py-1 rounded font-semibold" style="background: ${movie.active ? 'rgba(45,212,160,0.15)' : 'rgba(232,64,87,0.15)'}; color: ${movie.active ? 'var(--success)' : 'var(--danger)'};">
+                        ${movie.active ? 'Aktif' : 'Nonaktif'}
+                    </button>
+                </td>
+                <td class="px-4 py-3 text-right">
+                    <div class="flex items-center justify-end gap-1">
+                        <button onclick="openEditModal('${movie.id}')" class="w-8 h-8 rounded flex items-center justify-center" style="background: var(--bg); color: var(--accent);" title="Edit">
+                            <i class="fas fa-pen text-xs"></i>
+                        </button>
+                        <button onclick="duplicateMovie('${movie.id}')" class="w-8 h-8 rounded flex items-center justify-center" style="background: var(--bg); color: var(--muted);" title="Duplikat">
+                            <i class="fas fa-copy text-xs"></i>
+                        </button>
+                        <button onclick="deleteMovie('${movie.id}')" class="w-8 h-8 rounded flex items-center justify-center" style="background: var(--bg); color: var(--danger);" title="Hapus">
+                            <i class="fas fa-trash text-xs"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function toggleActive(id) {
+        const movie = movies.find(m => m.id === id);
+        if (movie) {
+            movie.active = !movie.active;
+            saveMovies();
+            renderManageTable();
+            updateStats();
+            showToast(`"${movie.title}" ${movie.active ? 'diaktifkan' : 'dinonaktifkan'}`, 'info');
+        }
+    }
+
+    function deleteMovie(id) {
+        const movie = movies.find(m => m.id === id);
+        if (!movie) return;
+        // Custom confirm via inline approach
+        const yes = window.confirm(`Hapus film "${movie.title}"?`); // Using confirm as fallback — in production this would be a custom modal
+        if (!yes) return;
+        movies = movies.filter(m => m.id !== id);
+        saveMovies();
+        renderManageTable();
+        updateStats();
+        showToast(`"${movie.title}" dihapus`, 'error');
+    }
+
+    function duplicateMovie(id) {
+        const movie = movies.find(m => m.id === id);
+        if (!movie) return;
+        const dup = { ...movie, id: genId(), title: movie.title + ' (Copy)', views: 0, createdAt: Date.now() };
+        movies.unshift(dup);
+        saveMovies();
+        renderManageTable();
+        updateStats();
+        showToast(`"${dup.title}" diduplikasi`, 'success');
+    }
+
+    // ===================== EDIT MODAL =====================
+    function openEditModal(id) {
+        const movie = movies.find(m => m.id === id);
+        if (!movie) return;
+        document.getElementById('editId').value = movie.id;
+        document.getElementById('editTitle').value = movie.title;
+        document.getElementById('editIframe').value = movie.iframeUrl || '';
+        document.getElementById('editCategory').value = movie.category;
+        document.getElementById('editYear').value = movie.year || '';
+        document.getElementById('editPoster').value = movie.poster || '';
+        document.getElementById('editDesc').value = movie.desc || '';
+        document.getElementById('editIframeCode').value = movie.iframeCode || '';
+        document.getElementById('editModal').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeEditModal() {
+        document.getElementById('editModal').classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+
+    function handleEdit(e) {
+        e.preventDefault();
+        const id = document.getElementById('editId').value;
+        const movie = movies.find(m => m.id === id);
+        if (!movie) return;
+        movie.title = document.getElementById('editTitle').value.trim();
+        movie.iframeUrl = document.getElementById('editIframe').value.trim();
+        movie.category = document.getElementById('editCategory').value;
+        movie.year = parseInt(document.getElementById('editYear').value) || movie.year;
+        movie.poster = document.getElementById('editPoster').value.trim();
+        movie.desc = document.getElementById('editDesc').value.trim();
+        movie.iframeCode = document.getElementById('editIframeCode').value.trim();
+        saveMovies();
+        closeEditModal();
+        renderManageTable();
+        renderMovieGrid();
+        updateStats();
+        showToast(`"${movie.title}" diperbarui`, 'success');
+    }
+
+    // ===================== EXPORT / IMPORT =====================
+    function exportData() {
+        const blob = new Blob([JSON.stringify(movies, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `cinevault_export_${new Date().toISOString().slice(0,10)}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast('Data berhasil diekspor!', 'success');
+    }
+
+    function importData(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+            try {
+                const data = JSON.parse(evt.target.result);
+                if (!Array.isArray(data)) throw new Error('Format tidak valid');
+                // Validate structure
+                const valid = data.every(m => m.id && m.title);
+                if (!valid) throw new Error('Struktur data tidak valid');
+                movies = data;
+                saveMovies();
+                renderManageTable();
+                updateStats();
+                showToast(`${data.length} film berhasil diimpor!`, 'success');
+            } catch (err) {
+                showToast('Gagal mengimpor: ' + err.message, 'error');
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    // ===================== KEYBOARD SHORTCUTS =====================
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closePlayer();
+            closeEditModal();
+        }
+    });
+
+    // ===================== INIT =====================
+    loadMovies();
+    showSection('home');
+</script>
 </body>
 </html>
