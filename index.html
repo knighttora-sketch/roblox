@@ -2,787 +2,571 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>CineVault — Movie Streaming Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;400;600;800;900&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                fontFamily: { display: ['Space Grotesk','sans-serif'], body: ['Outfit','sans-serif'] }
+            }
+        }
+    }
+    </script>
     <style>
         :root {
-            --bg: #0a0a0f; --bg-elevated: #12121a; --card: #1a1a26;
-            --card-hover: #22222f; --border: #2a2a3a; --fg: #e8e8f0;
-            --muted: #7a7a8e; --accent: #e6a817; --accent-glow: rgba(230,168,23,0.3);
-            --danger: #e84057; --success: #2dd4a0;
+            --bg:#0a0a0f;--bg2:#12121a;--card:#1a1a26;--card2:#22222f;
+            --border:#2a2a3a;--fg:#e8e8f0;--muted:#7a7a8e;
+            --accent:#e6a817;--accent-g:rgba(230,168,23,0.3);
+            --danger:#e84057;--success:#2dd4a0;
         }
-        * { margin:0; padding:0; box-sizing:border-box; }
-        body { font-family:'Outfit',sans-serif; background:var(--bg); color:var(--fg); min-height:100vh; overflow-x:hidden; }
-        h1,h2,h3,h4 { font-family:'Space Grotesk',sans-serif; }
-        .ambient-bg { position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden; }
-        .ambient-bg::before { content:''; position:absolute; width:600px; height:600px; background:radial-gradient(circle,var(--accent-glow) 0%,transparent 70%); top:-200px; right:-100px; animation:ambientFloat 12s ease-in-out infinite alternate; }
-        .ambient-bg::after { content:''; position:absolute; width:500px; height:500px; background:radial-gradient(circle,rgba(100,50,200,0.12) 0%,transparent 70%); bottom:-150px; left:-100px; animation:ambientFloat 15s ease-in-out infinite alternate-reverse; }
-        @keyframes ambientFloat { 0%{transform:translate(0,0) scale(1)} 100%{transform:translate(80px,60px) scale(1.2)} }
-        ::-webkit-scrollbar { width:6px } ::-webkit-scrollbar-track { background:var(--bg) } ::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px }
-        .grain { position:fixed; inset:0; z-index:1; pointer-events:none; opacity:0.03; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
-        .movie-card { transition:transform 0.3s ease,box-shadow 0.3s ease; }
-        .movie-card:hover { transform:translateY(-6px) scale(1.02); box-shadow:0 12px 40px rgba(0,0,0,0.5),0 0 20px var(--accent-glow); }
-        .toast-container { position:fixed; top:20px; right:20px; z-index:9999; display:flex; flex-direction:column; gap:8px; }
-        .toast { padding:12px 20px; border-radius:8px; font-size:14px; font-weight:600; animation:toastIn 0.4s ease,toastOut 0.4s ease 2.6s forwards; box-shadow:0 8px 24px rgba(0,0,0,0.4); }
-        @keyframes toastIn { from{transform:translateX(100%);opacity:0} to{transform:translateX(0);opacity:1} }
-        @keyframes toastOut { from{opacity:1} to{opacity:0;transform:translateY(-10px)} }
-        .modal-overlay { position:fixed; inset:0; z-index:1000; background:rgba(0,0,0,0.85); backdrop-filter:blur(8px); display:flex; align-items:center; justify-content:center; animation:fadeIn 0.3s ease; }
-        @keyframes fadeIn { from{opacity:0} to{opacity:1} }
-        @keyframes slideUp { from{transform:translateY(30px);opacity:0} to{transform:translateY(0);opacity:1} }
-        .modal-content { animation:slideUp 0.35s ease; }
-        input:focus,textarea:focus,select:focus { outline:none; border-color:var(--accent)!important; box-shadow:0 0 0 3px var(--accent-glow); }
-        .player-wrapper { position:relative; width:100%; padding-bottom:56.25%; background:#000; border-radius:12px; overflow:hidden; }
-        .player-wrapper iframe { position:absolute; inset:0; width:100%; height:100%; border:none; }
-        .player-wrapper.is-fullscreen { position:fixed; inset:0; z-index:9998; padding-bottom:0; border-radius:0; width:100vw; height:100vh; }
-        .player-wrapper.is-fullscreen iframe { width:100vw; height:100vh; }
-        .nav-link.active { color:var(--accent); }
-        .nav-link.active::after { content:''; position:absolute; bottom:-4px; left:50%; transform:translateX(-50%); width:20px; height:3px; background:var(--accent); border-radius:2px; }
-        .tab-btn { position:relative; transition:color 0.2s; }
-        .tab-btn.active::after { content:''; position:absolute; bottom:0; left:0; right:0; height:2px; background:var(--accent); border-radius:1px; }
-        .star-btn { transition:color 0.15s,transform 0.15s; cursor:pointer; }
-        .star-btn:hover { transform:scale(1.2); }
-        .delete-confirm-overlay { position:fixed; inset:0; z-index:2000; background:rgba(0,0,0,0.9); backdrop-filter:blur(6px); display:flex; align-items:center; justify-content:center; animation:fadeIn 0.2s ease; }
-        /* Shield pulse */
-        @keyframes shieldPulse { 0%,100%{box-shadow:0 0 0 0 rgba(45,212,160,0.4)} 50%{box-shadow:0 0 0 8px rgba(45,212,160,0)} }
-        .shield-active { animation:shieldPulse 2s infinite; }
-        @media(prefers-reduced-motion:reduce){ *,*::before,*::after{animation-duration:0.01ms!important;transition-duration:0.01ms!important} }
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--fg);min-height:100vh;overflow-x:hidden;-webkit-tap-highlight-color:transparent}
+        h1,h2,h3,h4{font-family:'Space Grotesk',sans-serif}
+        .amb{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+        .amb::before{content:'';position:absolute;width:50vw;height:50vw;max-width:600px;max-height:600px;background:radial-gradient(circle,var(--accent-g) 0%,transparent 70%);top:-20vw;right:-10vw;animation:af 12s ease-in-out infinite alternate}
+        .amb::after{content:'';position:absolute;width:40vw;height:40vw;max-width:500px;max-height:500px;background:radial-gradient(circle,rgba(100,50,200,0.1) 0%,transparent 70%);bottom:-10vw;left:-10vw;animation:af 15s ease-in-out infinite alternate-reverse}
+        @keyframes af{0%{transform:translate(0,0) scale(1)}100%{transform:translate(5vw,3vw) scale(1.2)}}
+        ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+        .grain{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:0.03;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+        .mc{transition:transform .3s,box-shadow .3s}.mc:hover{transform:translateY(-4px) scale(1.01);box-shadow:0 8px 30px rgba(0,0,0,.5),0 0 15px var(--accent-g)}
+        @media(max-width:640px){.mc:hover{transform:none;box-shadow:none}}
+        .tc{position:fixed;top:12px;right:12px;z-index:9999;display:flex;flex-direction:column;gap:6px}
+        .tt{padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;animation:ti .3s ease,to .3s ease 2.7s forwards;box-shadow:0 6px 20px rgba(0,0,0,.4)}
+        @keyframes ti{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+        @keyframes to{from{opacity:1}to{opacity:0;transform:translateY(-8px)}}
+        .mo{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.88);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;animation:fi .25s ease}
+        @keyframes fi{from{opacity:0}to{opacity:1}}
+        @keyframes su{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+        .mc2{animation:su .3s ease}
+        input:focus,textarea:focus,select:focus{outline:none;border-color:var(--accent)!important;box-shadow:0 0 0 2px var(--accent-g)}
+        .pw{position:relative;width:100%;padding-bottom:56.25%;background:#000;border-radius:10px;overflow:hidden}
+        .pw iframe{position:absolute;inset:0;width:100%;height:100%;border:none}
+        .pw.fs{position:fixed;inset:0;z-index:9998;padding-bottom:0;border-radius:0;width:100vw;height:100vh}
+        .pw.fs iframe{width:100vw;height:100vh}
+        .nl.a{color:var(--accent)}.nl.a::after{content:'';position:absolute;bottom:-3px;left:50%;transform:translateX(-50%);width:16px;height:2px;background:var(--accent);border-radius:1px}
+        .sb{transition:color .15s,transform .15s;cursor:pointer}.sb:hover{transform:scale(1.15)}
+        .dc{position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.92);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;animation:fi .2s ease}
+        @keyframes sp{0%,100%{box-shadow:0 0 0 0 rgba(45,212,160,.4)}50%{box-shadow:0 0 0 6px rgba(45,212,160,0)}}
+        .sha{animation:sp 2s infinite}
+        .hide{display:none!important}
+        @media(max-width:640px){.mob-p{padding-left:12px;padding-right:12px}.mob-text{font-size:14px}}
+        @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
     </style>
 </head>
 <body>
-<div class="ambient-bg"></div>
+<div class="amb"></div>
 <div class="grain"></div>
-<div class="toast-container" id="toastContainer"></div>
+<div class="tc" id="TC"></div>
 
-<!-- POPUP BLOCKER OVERLAY — kills injected overlays -->
-<div id="popupKillerOverlay" style="display:none; position:fixed; inset:0; z-index:99999; background:transparent; pointer-events:none;"></div>
-
-<!-- NAVIGATION -->
-<nav style="background:rgba(10,10,15,0.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);" class="fixed top-0 left-0 right-0 z-50">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between h-16">
-        <div class="flex items-center gap-3 cursor-pointer" onclick="showSection('home')">
-            <div style="background:var(--accent);width:36px;height:36px;border-radius:8px;" class="flex items-center justify-center"><i class="fas fa-film text-black text-sm"></i></div>
-            <h1 class="text-xl font-bold tracking-tight">Cine<span style="color:var(--accent)">Vault</span></h1>
+<!-- NAV -->
+<nav style="background:rgba(10,10,15,.93);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)" class="fixed top-0 left-0 right-0 z-50">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 flex items-center justify-between h-14 sm:h-16">
+        <div class="flex items-center gap-2 cursor-pointer" onclick="goSec('home')">
+            <div style="background:var(--accent);width:32px;height:32px;border-radius:7px" class="flex items-center justify-center flex-shrink-0"><i class="fas fa-film text-black text-xs"></i></div>
+            <h1 class="text-lg sm:text-xl font-bold tracking-tight">Cine<span style="color:var(--accent)">Vault</span></h1>
         </div>
-        <div class="hidden sm:flex items-center gap-6">
-            <button class="nav-link active relative text-sm font-semibold pb-1" onclick="showSection('home')" id="navHome">Beranda</button>
-            <button class="nav-link relative text-sm font-semibold pb-1 hidden" style="color:var(--muted)" onclick="showSection('upload')" id="navUpload">Upload Film</button>
-            <button class="nav-link relative text-sm font-semibold pb-1 hidden" style="color:var(--muted)" onclick="showSection('manage')" id="navManage">Kelola Film</button>
-            <button class="nav-link relative text-sm font-semibold pb-1 hidden" style="color:var(--muted)" onclick="showSection('blocker')" id="navBlocker">
-                <i class="fas fa-shield-alt mr-1"></i>Blocker
-            </button>
+        <div class="hidden md:flex items-center gap-5">
+            <button class="nl a relative text-sm font-semibold pb-1" onclick="goSec('home')" id="nH">Beranda</button>
+            <button class="nl relative text-sm font-semibold pb-1 hide" style="color:var(--muted)" onclick="goSec('upload')" id="nU">Upload</button>
+            <button class="nl relative text-sm font-semibold pb-1 hide" style="color:var(--muted)" onclick="goSec('manage')" id="nM">Kelola</button>
+            <button class="nl relative text-sm font-semibold pb-1 hide" style="color:var(--muted)" onclick="goSec('blocker')" id="nB"><i class="fas fa-shield-alt mr-1"></i>Blocker</button>
         </div>
-        <div class="flex items-center gap-3">
-            <div class="relative">
-                <input type="text" id="searchInput" placeholder="Cari film..." oninput="searchMovies()" class="text-sm px-4 py-2 pl-9 rounded-lg" style="background:var(--card);border:1px solid var(--border);color:var(--fg);width:180px">
-                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-xs" style="color:var(--muted)"></i>
+        <div class="flex items-center gap-2">
+            <div class="relative hidden sm:block">
+                <input type="text" id="SI" placeholder="Cari film..." oninput="searchMov()" class="text-sm px-3 py-1.5 pl-8 rounded-lg" style="background:var(--card);border:1px solid var(--border);color:var(--fg);width:160px">
+                <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-xs" style="color:var(--muted)"></i>
             </div>
-            <!-- Shield status badge -->
-            <div id="shieldBadge" class="hidden items-center gap-1 px-2 py-1 rounded text-xs font-semibold cursor-pointer" style="background:rgba(45,212,160,0.15);color:var(--success);border:1px solid rgba(45,212,160,0.3);" onclick="showSection('blocker')" title="Popup Blocker Aktif">
-                <i class="fas fa-shield-alt"></i><span class="hidden sm:inline" id="shieldCount">0</span>
+            <div id="SB" class="hide items-center gap-1 px-2 py-1 rounded text-xs font-semibold cursor-pointer" style="background:rgba(45,212,160,.12);color:var(--success);border:1px solid rgba(45,212,160,.25)" onclick="goSec('blocker')">
+                <i class="fas fa-shield-alt"></i><span id="SC">0</span>
             </div>
-            <button id="adminToggleBtn" onclick="handleAdminToggle()" class="px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-2" style="background:var(--card);border:1px solid var(--border);color:var(--muted)">
+            <button id="AB" onclick="admTog()" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5" style="background:var(--card);border:1px solid var(--border);color:var(--muted)">
                 <i class="fas fa-lock"></i><span class="hidden sm:inline">Admin</span>
             </button>
-            <button class="sm:hidden" style="color:var(--muted)" onclick="toggleMobileMenu()"><i class="fas fa-bars"></i></button>
+            <button class="md:hidden p-2" style="color:var(--muted)" onclick="togMob()"><i class="fas fa-bars"></i></button>
         </div>
     </div>
-    <div id="mobileMenu" class="hidden sm:hidden px-4 pb-3" style="background:rgba(10,10,15,0.95)">
-        <button class="block w-full text-left py-2 text-sm font-semibold" style="color:var(--accent)" onclick="showSection('home');toggleMobileMenu()">Beranda</button>
-        <button class="block w-full text-left py-2 text-sm font-semibold hidden" id="mobNavUpload" style="color:var(--muted)" onclick="showSection('upload');toggleMobileMenu()">Upload Film</button>
-        <button class="block w-full text-left py-2 text-sm font-semibold hidden" id="mobNavManage" style="color:var(--muted)" onclick="showSection('manage');toggleMobileMenu()">Kelola Film</button>
-        <button class="block w-full text-left py-2 text-sm font-semibold hidden" id="mobNavBlocker" style="color:var(--muted)" onclick="showSection('blocker');toggleMobileMenu()"><i class="fas fa-shield-alt mr-1"></i>Blocker</button>
+    <!-- Mobile search -->
+    <div class="sm:hidden px-3 pb-2" id="mobS">
+        <input type="text" id="SIM" placeholder="Cari film..." oninput="searchMob()" class="w-full text-sm px-3 py-2 pl-8 rounded-lg" style="background:var(--card);border:1px solid var(--border);color:var(--fg)">
+        <i class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-xs" style="color:var(--muted);margin-top:-8px"></i>
+    </div>
+    <!-- Mobile menu -->
+    <div id="MM" class="hide md:hidden px-3 pb-3" style="background:rgba(10,10,15,.96)">
+        <button class="block w-full text-left py-2.5 text-sm font-semibold" style="color:var(--accent)" onclick="goSec('home');togMob()">Beranda</button>
+        <button class="block w-full text-left py-2.5 text-sm font-semibold hide" id="mU" style="color:var(--muted)" onclick="goSec('upload');togMob()">Upload Film</button>
+        <button class="block w-full text-left py-2.5 text-sm font-semibold hide" id="mM" style="color:var(--muted)" onclick="goSec('manage');togMob()">Kelola Film</button>
+        <button class="block w-full text-left py-2.5 text-sm font-semibold hide" id="mB" style="color:var(--muted)" onclick="goSec('blocker');togMob()"><i class="fas fa-shield-alt mr-1"></i>Blocker</button>
     </div>
 </nav>
 
-<main class="relative z-10 pt-16">
+<main class="relative z-10 pt-14 sm:pt-16">
 
 <!-- HOME -->
-<section id="sectionHome">
-    <div class="relative overflow-hidden" style="min-height:420px">
-        <div class="absolute inset-0" style="background:linear-gradient(135deg,rgba(230,168,23,0.08) 0%,transparent 50%,rgba(100,50,200,0.06) 100%)"></div>
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-24 relative">
-            <div class="max-w-2xl">
-                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold mb-4" style="background:var(--accent-glow);color:var(--accent);border:1px solid rgba(230,168,23,0.3)">
-                    <i class="fas fa-sparkles"></i> Portal Streaming Film
-                </div>
-                <h2 class="text-4xl sm:text-5xl lg:text-6xl font-black leading-tight mb-4">Nonton Film<br><span style="color:var(--accent)">Favorit Kamu</span></h2>
-                <p class="text-base sm:text-lg mb-8" style="color:var(--muted);max-width:480px">Koleksi film terlengkap dengan popup blocker bawaan. Streaming tanpa gangguan iklan pop-up.</p>
-                <div class="flex flex-wrap gap-3">
-                    <button onclick="document.getElementById('movieGrid').scrollIntoView({behavior:'smooth'})" class="px-6 py-3 rounded-lg font-semibold text-sm text-black flex items-center gap-2" style="background:var(--accent)"><i class="fas fa-play"></i> Jelajahi Koleksi</button>
-                    <button id="heroAdminBtn" onclick="showLoginModal()" class="px-6 py-3 rounded-lg font-semibold text-sm flex items-center gap-2" style="background:var(--card);border:1px solid var(--border);color:var(--fg)"><i class="fas fa-shield-alt"></i> Admin Panel</button>
+<section id="sH">
+    <div class="relative overflow-hidden" style="min-height:320px">
+        <div class="absolute inset-0" style="background:linear-gradient(135deg,rgba(230,168,23,.07) 0%,transparent 50%,rgba(100,50,200,.05) 100%)"></div>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-20 relative">
+            <div class="max-w-xl">
+                <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold mb-3" style="background:var(--accent-g);color:var(--accent);border:1px solid rgba(230,168,23,.25)"><i class="fas fa-sparkles"></i> Streaming Portal</div>
+                <h2 class="text-3xl sm:text-4xl lg:text-5xl font-black leading-tight mb-3">Nonton Film<br><span style="color:var(--accent)">Favorit Kamu</span></h2>
+                <p class="text-sm sm:text-base mb-6" style="color:var(--muted);max-width:420px">Koleksi film terlengkap dengan popup blocker bawaan. Streaming tanpa gangguan iklan pop-up.</p>
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="document.getElementById('mG').scrollIntoView({behavior:'smooth'})" class="px-5 py-2.5 rounded-lg font-semibold text-sm text-black flex items-center gap-2" style="background:var(--accent)"><i class="fas fa-play"></i> Jelajahi</button>
+                    <button id="hB" onclick="showLogin()" class="px-5 py-2.5 rounded-lg font-semibold text-sm flex items-center gap-2" style="background:var(--card);border:1px solid var(--border);color:var(--fg)"><i class="fas fa-shield-alt"></i> Admin</button>
                 </div>
             </div>
         </div>
     </div>
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 -mt-4 mb-8">
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div class="rounded-xl p-4 text-center" style="background:var(--card);border:1px solid var(--border)"><div class="text-2xl font-black" style="color:var(--accent)" id="statTotal">0</div><div class="text-xs" style="color:var(--muted)">Total Film</div></div>
-            <div class="rounded-xl p-4 text-center" style="background:var(--card);border:1px solid var(--border)"><div class="text-2xl font-black" style="color:var(--success)" id="statActive">0</div><div class="text-xs" style="color:var(--muted)">Aktif</div></div>
-            <div class="rounded-xl p-4 text-center" style="background:var(--card);border:1px solid var(--border)"><div class="text-2xl font-black" style="color:var(--fg)" id="statCategories">0</div><div class="text-xs" style="color:var(--muted)">Kategori</div></div>
-            <div class="rounded-xl p-4 text-center" style="background:var(--card);border:1px solid var(--border)"><div class="text-2xl font-black" style="color:var(--danger)" id="statViews">0</div><div class="text-xs" style="color:var(--muted)">Total Views</div></div>
+    <!-- Stats -->
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 -mt-2 mb-6">
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <div class="rounded-lg p-3 text-center" style="background:var(--card);border:1px solid var(--border)"><div class="text-xl sm:text-2xl font-black" style="color:var(--accent)" id="s1">0</div><div class="text-xs" style="color:var(--muted)">Total Film</div></div>
+            <div class="rounded-lg p-3 text-center" style="background:var(--card);border:1px solid var(--border)"><div class="text-xl sm:text-2xl font-black" style="color:var(--success)" id="s2">0</div><div class="text-xs" style="color:var(--muted)">Aktif</div></div>
+            <div class="rounded-lg p-3 text-center" style="background:var(--card);border:1px solid var(--border)"><div class="text-xl sm:text-2xl font-black" id="s3">0</div><div class="text-xs" style="color:var(--muted)">Kategori</div></div>
+            <div class="rounded-lg p-3 text-center" style="background:var(--card);border:1px solid var(--border)"><div class="text-xl sm:text-2xl font-black" style="color:var(--danger)" id="s4">0</div><div class="text-xs" style="color:var(--muted)">Views</div></div>
         </div>
     </div>
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 mb-6"><div class="flex items-center gap-2 overflow-x-auto pb-2" id="categoryFilters" style="scrollbar-width:none"></div></div>
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 pb-16" id="movieGrid">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5" id="movieGridInner"></div>
-        <div id="emptyState" class="hidden text-center py-20">
-            <i class="fas fa-film text-5xl mb-4" style="color:var(--border)"></i>
-            <p class="text-lg font-semibold mb-2" style="color:var(--muted)">Belum ada film</p>
-            <p class="text-sm mb-6" style="color:var(--border)">Login admin untuk mengupload film</p>
-            <button onclick="showLoginModal()" class="px-5 py-2 rounded-lg text-sm font-semibold" style="background:var(--accent);color:black"><i class="fas fa-lock mr-2"></i>Login Admin</button>
+    <!-- Sync notice -->
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 mb-4">
+        <div class="flex items-start gap-2 p-3 rounded-lg text-xs" style="background:rgba(230,168,23,.08);border:1px solid rgba(230,168,23,.15);color:var(--accent)">
+            <i class="fas fa-info-circle mt-0.5 flex-shrink-0"></i>
+            <span>Data disimpan di browser ini saja. Gunakan <b>Export/Import</b> di panel Admin untuk pindahkan data ke perangkat lain.</span>
+        </div>
+    </div>
+    <!-- Filters -->
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 mb-4"><div class="flex items-center gap-2 overflow-x-auto pb-1" id="CF" style="scrollbar-width:none;-webkit-overflow-scrolling:touch"></div></div>
+    <!-- Grid -->
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 pb-12" id="mG">
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4" id="GI"></div>
+        <div id="ES" class="hide text-center py-16">
+            <i class="fas fa-film text-4xl mb-3" style="color:var(--border)"></i>
+            <p class="text-base font-semibold mb-1" style="color:var(--muted)">Belum ada film</p>
+            <p class="text-xs mb-5" style="color:var(--border)">Login admin untuk upload</p>
+            <button onclick="showLogin()" class="px-4 py-2 rounded-lg text-sm font-semibold text-black" style="background:var(--accent)"><i class="fas fa-lock mr-1"></i>Login</button>
         </div>
     </div>
 </section>
 
-<!-- UPLOAD (Admin) -->
-<section id="sectionUpload" class="hidden">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 py-12">
-        <div class="mb-8">
-            <div class="inline-flex items-center gap-2 px-2 py-1 rounded text-xs font-semibold mb-2" style="background:rgba(230,168,23,0.15);color:var(--accent)"><i class="fas fa-shield-alt"></i> Admin</div>
-            <h2 class="text-3xl font-black mb-2">Upload Film Baru</h2>
-            <p style="color:var(--muted)">Tambahkan film dengan embed iframe dari platform streaming.</p>
+<!-- UPLOAD -->
+<section id="sU" class="hide">
+    <div class="max-w-3xl mx-auto px-3 sm:px-6 py-8 sm:py-12">
+        <div class="mb-6">
+            <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-semibold mb-2" style="background:rgba(230,168,23,.12);color:var(--accent)"><i class="fas fa-shield-alt"></i> Admin</div>
+            <h2 class="text-2xl sm:text-3xl font-black mb-1">Upload Film</h2>
+            <p class="text-sm" style="color:var(--muted)">Tambahkan film via embed iframe.</p>
         </div>
-        <form id="uploadForm" onsubmit="handleUpload(event)" class="space-y-6">
-            <div><label class="block text-sm font-semibold mb-2">Judul Film <span style="color:var(--danger)">*</span></label><input type="text" id="formTitle" required placeholder="Contoh: Interstellar" class="w-full px-4 py-3 rounded-lg text-sm" style="background:var(--card);border:1px solid var(--border);color:var(--fg)"></div>
-            <div><label class="block text-sm font-semibold mb-2">URL Iframe <span style="color:var(--danger)">*</span></label>
-                <div class="relative"><input type="url" id="formIframe" required placeholder="https://stream.example.com/embed/abc123" class="w-full px-4 py-3 pr-12 rounded-lg text-sm" style="background:var(--card);border:1px solid var(--border);color:var(--fg)"><button type="button" onclick="previewIframe()" class="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 rounded text-xs font-semibold" style="background:var(--accent);color:black" title="Preview"><i class="fas fa-eye"></i></button></div>
-                <p class="text-xs mt-1" style="color:var(--muted)">Tempel URL embed iframe dari player streaming</p>
+        <form id="UF" onsubmit="doUpload(event)" class="space-y-5">
+            <div><label class="block text-sm font-semibold mb-1.5">Judul <span style="color:var(--danger)">*</span></label><input type="text" id="fT" required placeholder="Interstellar" class="w-full px-3 py-2.5 rounded-lg text-sm" style="background:var(--card);border:1px solid var(--border);color:var(--fg)"></div>
+            <div><label class="block text-sm font-semibold mb-1.5">URL Iframe <span style="color:var(--danger)">*</span></label>
+                <div class="relative"><input type="url" id="fI" required placeholder="https://stream.example.com/embed/abc" class="w-full px-3 py-2.5 pr-10 rounded-lg text-sm" style="background:var(--card);border:1px solid var(--border);color:var(--fg)"><button type="button" onclick="prevIF()" class="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 rounded text-xs font-semibold" style="background:var(--accent);color:black"><i class="fas fa-eye"></i></button></div>
             </div>
-            <div id="iframePreviewBox" class="hidden"><label class="block text-sm font-semibold mb-2">Preview Iframe</label><div class="player-wrapper" style="border:1px solid var(--border)"><iframe id="previewIframeEl" sandbox="allow-scripts allow-same-origin allow-presentation" loading="lazy"></iframe></div><button type="button" onclick="document.getElementById('iframePreviewBox').classList.add('hidden')" class="mt-2 text-xs font-semibold" style="color:var(--danger)">Tutup Preview</button></div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div><label class="block text-sm font-semibold mb-2">URL Poster</label><input type="url" id="formPoster" placeholder="https://image.tmdb.org/t/p/w500/..." class="w-full px-4 py-3 rounded-lg text-sm" style="background:var(--card);border:1px solid var(--border);color:var(--fg)"></div>
-                <div><label class="block text-sm font-semibold mb-2">Kategori <span style="color:var(--danger)">*</span></label><select id="formCategory" required class="w-full px-4 py-3 rounded-lg text-sm" style="background:var(--card);border:1px solid var(--border);color:var(--fg)"><option value="">Pilih</option><option value="Action">Action</option><option value="Drama">Drama</option><option value="Sci-Fi">Sci-Fi</option><option value="Horror">Horror</option><option value="Comedy">Comedy</option><option value="Thriller">Thriller</option><option value="Romance">Romance</option><option value="Animation">Animation</option><option value="Documentary">Documentary</option><option value="Anime">Anime</option></select></div>
+            <div id="fPB" class="hide"><label class="block text-sm font-semibold mb-1.5">Preview</label><div class="pw" style="border:1px solid var(--border)"><iframe id="fPE" sandbox="allow-scripts allow-same-origin allow-presentation" loading="lazy"></iframe></div><button type="button" onclick="document.getElementById('fPB').classList.add('hide')" class="mt-2 text-xs font-semibold" style="color:var(--danger)">Tutup</button></div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div><label class="block text-sm font-semibold mb-1.5">Poster URL</label><input type="url" id="fP" placeholder="https://image.tmdb.org/..." class="w-full px-3 py-2.5 rounded-lg text-sm" style="background:var(--card);border:1px solid var(--border);color:var(--fg)"></div>
+                <div><label class="block text-sm font-semibold mb-1.5">Kategori <span style="color:var(--danger)">*</span></label><select id="fC" required class="w-full px-3 py-2.5 rounded-lg text-sm" style="background:var(--card);border:1px solid var(--border);color:var(--fg)"><option value="">Pilih</option><option>Action</option><option>Drama</option><option>Sci-Fi</option><option>Horror</option><option>Comedy</option><option>Thriller</option><option>Romance</option><option>Animation</option><option>Documentary</option><option>Anime</option></select></div>
             </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div><label class="block text-sm font-semibold mb-2">Tahun</label><input type="number" id="formYear" placeholder="2024" min="1900" max="2030" class="w-full px-4 py-3 rounded-lg text-sm" style="background:var(--card);border:1px solid var(--border);color:var(--fg)"></div>
-                <div><label class="block text-sm font-semibold mb-2">Rating (1-10)</label><div class="flex items-center gap-1 py-3" id="ratingStars"></div><input type="hidden" id="formRating" value="0"></div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div><label class="block text-sm font-semibold mb-1.5">Tahun</label><input type="number" id="fY" placeholder="2024" min="1900" max="2030" class="w-full px-3 py-2.5 rounded-lg text-sm" style="background:var(--card);border:1px solid var(--border);color:var(--fg)"></div>
+                <div><label class="block text-sm font-semibold mb-1.5">Rating</label><div class="flex items-center gap-1 py-2" id="RS"></div><input type="hidden" id="fR" value="0"></div>
             </div>
-            <div><label class="block text-sm font-semibold mb-2">Deskripsi</label><textarea id="formDesc" rows="3" placeholder="Sinopsis singkat..." class="w-full px-4 py-3 rounded-lg text-sm resize-none" style="background:var(--card);border:1px solid var(--border);color:var(--fg)"></textarea></div>
-            <details class="rounded-lg" style="background:var(--card);border:1px solid var(--border)"><summary class="px-4 py-3 text-sm font-semibold cursor-pointer flex items-center gap-2" style="color:var(--muted)"><i class="fas fa-code"></i> Mode Lanjutan — Tempel Kode Iframe</summary><div class="px-4 pb-4"><textarea id="formIframeCode" rows="4" placeholder='<iframe src="https://..." width="100%" height="100%" allowfullscreen></iframe>' class="w-full px-4 py-3 rounded-lg text-sm resize-none font-mono" style="background:var(--bg);border:1px solid var(--border);color:var(--fg)"></textarea><p class="text-xs mt-1" style="color:var(--muted)">Jika diisi, kode ini dipakai sebagai ganti URL</p></div></details>
-            <div class="flex items-center gap-3 pt-2"><button type="submit" class="px-8 py-3 rounded-lg font-bold text-sm text-black flex items-center gap-2" style="background:var(--accent)"><i class="fas fa-cloud-upload-alt"></i> Upload Film</button><button type="button" onclick="resetForm()" class="px-6 py-3 rounded-lg font-semibold text-sm" style="background:var(--card);border:1px solid var(--border);color:var(--muted)">Reset</button></div>
+            <div><label class="block text-sm font-semibold mb-1.5">Deskripsi</label><textarea id="fD" rows="2" placeholder="Sinopsis..." class="w-full px-3 py-2.5 rounded-lg text-sm resize-none" style="background:var(--card);border:1px solid var(--border);color:var(--fg)"></textarea></div>
+            <details class="rounded-lg" style="background:var(--card);border:1px solid var(--border)"><summary class="px-3 py-2.5 text-sm font-semibold cursor-pointer" style="color:var(--muted)"><i class="fas fa-code mr-1"></i> Iframe Code Langsung</summary><div class="px-3 pb-3"><textarea id="fIC" rows="3" placeholder='<iframe src="https://..." allowfullscreen></iframe>' class="w-full px-3 py-2.5 rounded-lg text-sm resize-none font-mono" style="background:var(--bg);border:1px solid var(--border);color:var(--fg)"></textarea></div></details>
+            <div class="flex items-center gap-2 pt-1"><button type="submit" class="px-6 py-2.5 rounded-lg font-bold text-sm text-black" style="background:var(--accent)"><i class="fas fa-cloud-upload-alt mr-1"></i>Upload</button><button type="button" onclick="rstForm()" class="px-4 py-2.5 rounded-lg text-sm" style="background:var(--card);border:1px solid var(--border);color:var(--muted)">Reset</button></div>
         </form>
     </div>
 </section>
 
-<!-- MANAGE (Admin) -->
-<section id="sectionManage" class="hidden">
-    <div class="max-w-5xl mx-auto px-4 sm:px-6 py-12">
-        <div class="flex items-center justify-between mb-8">
-            <div><div class="inline-flex items-center gap-2 px-2 py-1 rounded text-xs font-semibold mb-2" style="background:rgba(230,168,23,0.15);color:var(--accent)"><i class="fas fa-shield-alt"></i> Admin</div><h2 class="text-3xl font-black mb-2">Kelola Film</h2><p style="color:var(--muted)">Edit, hapus, atau kelola semua film.</p></div>
-            <div class="flex items-center gap-2"><button onclick="deleteAllMovies()" class="px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-2" style="background:rgba(232,64,87,0.1);border:1px solid rgba(232,64,87,0.3);color:var(--danger)"><i class="fas fa-trash-alt"></i> Hapus Semua</button><button onclick="exportData()" class="px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-2" style="background:var(--card);border:1px solid var(--border);color:var(--muted)"><i class="fas fa-download"></i> Export</button></div>
+<!-- MANAGE -->
+<section id="sM" class="hide">
+    <div class="max-w-5xl mx-auto px-3 sm:px-6 py-8 sm:py-12">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+            <div><div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-semibold mb-2" style="background:rgba(230,168,23,.12);color:var(--accent)"><i class="fas fa-shield-alt"></i> Admin</div><h2 class="text-2xl sm:text-3xl font-black mb-1">Kelola Film</h2></div>
+            <div class="flex items-center gap-2">
+                <button onclick="delAll()" class="px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1" style="background:rgba(232,64,87,.1);border:1px solid rgba(232,64,87,.25);color:var(--danger)"><i class="fas fa-trash-alt"></i><span class="hidden sm:inline">Hapus Semua</span></button>
+                <button onclick="expData()" class="px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1" style="background:var(--card);border:1px solid var(--border);color:var(--muted)"><i class="fas fa-download"></i><span class="hidden sm:inline">Export</span></button>
+            </div>
         </div>
-        <div class="mb-6 p-4 rounded-lg flex flex-wrap items-center gap-3" style="background:var(--card);border:1px solid var(--border)"><i class="fas fa-upload text-sm" style="color:var(--muted)"></i><span class="text-sm" style="color:var(--muted)">Import data:</span><input type="file" id="importFile" accept=".json" onchange="importData(event)" class="text-sm" style="color:var(--muted)"></div>
-        <div class="rounded-xl overflow-hidden" style="background:var(--card);border:1px solid var(--border)"><div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr style="background:var(--bg-elevated);border-bottom:1px solid var(--border)"><th class="text-left px-4 py-3 font-semibold" style="color:var(--muted)">Film</th><th class="text-left px-4 py-3 font-semibold hidden sm:table-cell" style="color:var(--muted)">Kategori</th><th class="text-left px-4 py-3 font-semibold hidden md:table-cell" style="color:var(--muted)">Iframe</th><th class="text-left px-4 py-3 font-semibold" style="color:var(--muted)">Status</th><th class="text-right px-4 py-3 font-semibold" style="color:var(--muted)">Aksi</th></tr></thead><tbody id="manageTableBody"></tbody></table></div><div id="manageEmpty" class="hidden text-center py-12"><i class="fas fa-inbox text-3xl mb-3" style="color:var(--border)"></i><p class="text-sm" style="color:var(--muted)">Belum ada film</p></div></div>
+        <!-- Import / Share -->
+        <div class="mb-4 p-3 rounded-lg" style="background:var(--card);border:1px solid var(--border)">
+            <div class="flex flex-wrap items-center gap-3 mb-2">
+                <i class="fas fa-upload text-xs" style="color:var(--muted)"></i>
+                <span class="text-xs" style="color:var(--muted)">Import JSON:</span>
+                <input type="file" id="impF" accept=".json" onchange="impData(event)" class="text-xs" style="color:var(--muted)">
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+                <button onclick="genShareLink()" class="px-3 py-1 rounded text-xs font-semibold flex items-center gap-1" style="background:var(--accent);color:black"><i class="fas fa-share-alt"></i> Share Link</button>
+                <span class="text-xs" style="color:var(--border)">Bagikan data ke perangkat lain via URL</span>
+            </div>
+        </div>
+        <!-- List -->
+        <div class="rounded-xl overflow-hidden" style="background:var(--card);border:1px solid var(--border)">
+            <div class="overflow-x-auto" style="-webkit-overflow-scrolling:touch">
+                <table class="w-full text-sm" style="min-width:500px">
+                    <thead><tr style="background:var(--bg2);border-bottom:1px solid var(--border)"><th class="text-left px-3 py-2 font-semibold" style="color:var(--muted)">Film</th><th class="text-left px-3 py-2 font-semibold" style="color:var(--muted)">Kat</th><th class="text-left px-3 py-2 font-semibold" style="color:var(--muted)">Status</th><th class="text-right px-3 py-2 font-semibold" style="color:var(--muted)">Aksi</th></tr></thead>
+                    <tbody id="MTB"></tbody>
+                </table>
+            </div>
+            <div id="ME" class="hide text-center py-10"><i class="fas fa-inbox text-2xl mb-2" style="color:var(--border)"></i><p class="text-xs" style="color:var(--muted)">Belum ada film</p></div>
+        </div>
     </div>
 </section>
 
-<!-- BLOCKER (Admin) -->
-<section id="sectionBlocker" class="hidden">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 py-12">
-        <div class="mb-8">
-            <div class="inline-flex items-center gap-2 px-2 py-1 rounded text-xs font-semibold mb-2" style="background:rgba(230,168,23,0.15);color:var(--accent)"><i class="fas fa-shield-alt"></i> Admin</div>
-            <h2 class="text-3xl font-black mb-2">Popup &amp; Ad Blocker</h2>
-            <p style="color:var(--muted)">Blokir pop-up, overlay iklan, dan window baru dari domain eksternal.</p>
-        </div>
-
-        <!-- Status -->
-        <div class="rounded-xl p-6 mb-6" style="background:var(--card);border:1px solid var(--border)">
-            <div class="flex items-center justify-between mb-4">
-                <div class="flex items-center gap-3">
-                    <div id="blockerShieldIcon" class="w-12 h-12 rounded-xl flex items-center justify-center shield-active" style="background:rgba(45,212,160,0.15)">
-                        <i class="fas fa-shield-alt text-xl" style="color:var(--success)"></i>
-                    </div>
-                    <div>
-                        <h3 class="font-bold text-lg" id="blockerStatusText">Blocker Aktif</h3>
-                        <p class="text-xs" style="color:var(--muted)">Melindungi dari pop-up &amp; overlay iklan</p>
-                    </div>
-                </div>
-                <button onclick="toggleBlocker()" id="blockerToggleBtn" class="px-5 py-2 rounded-lg font-bold text-sm" style="background:var(--success);color:#000">
-                    <i class="fas fa-power-off mr-1"></i> Aktif
-                </button>
-            </div>
-            <div class="grid grid-cols-3 gap-3">
-                <div class="text-center p-3 rounded-lg" style="background:var(--bg)">
-                    <div class="text-xl font-black" style="color:var(--success)" id="blockedCount">0</div>
-                    <div class="text-xs" style="color:var(--muted)">Diblokir</div>
-                </div>
-                <div class="text-center p-3 rounded-lg" style="background:var(--bg)">
-                    <div class="text-xl font-black" style="color:var(--accent)" id="whitelistCount">0</div>
-                    <div class="text-xs" style="color:var(--muted)">Whitelist</div>
-                </div>
-                <div class="text-center p-3 rounded-lg" style="background:var(--bg)">
-                    <div class="text-xl font-black" style="color:var(--danger)" id="blacklistCount">0</div>
-                    <div class="text-xs" style="color:var(--muted)">Blacklist</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Settings -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
-            <!-- Blacklist -->
-            <div class="rounded-xl p-5" style="background:var(--card);border:1px solid var(--border)">
-                <h3 class="font-bold mb-1 flex items-center gap-2"><i class="fas fa-ban text-sm" style="color:var(--danger)"></i> Blacklist Domain</h3>
-                <p class="text-xs mb-3" style="color:var(--muted)">Domain yang selalu diblokir</p>
-                <div class="flex gap-2 mb-3">
-                    <input type="text" id="blacklistInput" placeholder="ads.example.com" class="flex-1 px-3 py-2 rounded-lg text-sm" style="background:var(--bg);border:1px solid var(--border);color:var(--fg)">
-                    <button onclick="addToList('blacklist')" class="px-3 py-2 rounded-lg text-xs font-bold" style="background:var(--danger);color:white"><i class="fas fa-plus"></i></button>
-                </div>
-                <div id="blacklistItems" class="space-y-1 max-h-40 overflow-y-auto" style="scrollbar-width:thin"></div>
-            </div>
-            <!-- Whitelist -->
-            <div class="rounded-xl p-5" style="background:var(--card);border:1px solid var(--border)">
-                <h3 class="font-bold mb-1 flex items-center gap-2"><i class="fas fa-check-circle text-sm" style="color:var(--success)"></i> Whitelist Domain</h3>
-                <p class="text-xs mb-3" style="color:var(--muted)">Domain yang diizinkan</p>
-                <div class="flex gap-2 mb-3">
-                    <input type="text" id="whitelistInput" placeholder="vidsrc.xyz" class="flex-1 px-3 py-2 rounded-lg text-sm" style="background:var(--bg);border:1px solid var(--border);color:var(--fg)">
-                    <button onclick="addToList('whitelist')" class="px-3 py-2 rounded-lg text-xs font-bold" style="background:var(--success);color:black"><i class="fas fa-plus"></i></button>
-                </div>
-                <div id="whitelistItems" class="space-y-1 max-h-40 overflow-y-auto" style="scrollbar-width:thin"></div>
-            </div>
-        </div>
-
-        <!-- Options -->
-        <div class="rounded-xl p-5 mb-6" style="background:var(--card);border:1px solid var(--border)">
-            <h3 class="font-bold mb-4 flex items-center gap-2"><i class="fas fa-sliders-h text-sm" style="color:var(--accent)"></i> Opsi Blocker</h3>
-            <div class="space-y-3">
-                <label class="flex items-center justify-between cursor-pointer">
-                    <div><span class="text-sm font-semibold">Blokir window.open()</span><p class="text-xs" style="color:var(--muted)">Cegah script membuka tab/jendela baru</p></div>
-                    <input type="checkbox" id="optBlockWindowOpen" checked onchange="saveBlockerOptions()" class="w-5 h-5 rounded accent-amber-500">
-                </label>
-                <label class="flex items-center justify-between cursor-pointer">
-                    <div><span class="text-sm font-semibold">Blokir overlay iklan</span><p class="text-xs" style="color:var(--muted)">Hapus elemen overlay/float dari domain berbeda</p></div>
-                    <input type="checkbox" id="optBlockOverlays" checked onchange="saveBlockerOptions()" class="w-5 h-5 rounded accent-amber-500">
-                </label>
-                <label class="flex items-center justify-between cursor-pointer">
-                    <div><span class="text-sm font-semibold">Blokir iframe eksternal</span><p class="text-xs" style="color:var(--muted)">Cegah iframe dari domain yang tidak di-whitelist</p></div>
-                    <input type="checkbox" id="optBlockIframes" onchange="saveBlockerOptions()" class="w-5 h-5 rounded accent-amber-500">
-                </label>
-                <label class="flex items-center justify-between cursor-pointer">
-                    <div><span class="text-sm font-semibold">Blokir redirect</span><p class="text-xs" style="color:var(--muted)">Cegah navigasi ke domain yang dicurigai</p></div>
-                    <input type="checkbox" id="optBlockRedirect" checked onchange="saveBlockerOptions()" class="w-5 h-5 rounded accent-amber-500">
-                </label>
-            </div>
-        </div>
-
-        <!-- Block log -->
-        <div class="rounded-xl p-5" style="background:var(--card);border:1px solid var(--border)">
+<!-- BLOCKER -->
+<section id="sBL" class="hide">
+    <div class="max-w-4xl mx-auto px-3 sm:px-6 py-8 sm:py-12">
+        <div class="mb-6"><div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-semibold mb-2" style="background:rgba(230,168,23,.12);color:var(--accent)"><i class="fas fa-shield-alt"></i> Admin</div><h2 class="text-2xl sm:text-3xl font-black mb-1">Popup Blocker</h2><p class="text-sm" style="color:var(--muted)">Blokir pop-up &amp; overlay iklan dari domain eksternal.</p></div>
+        <div class="rounded-xl p-4 sm:p-5 mb-5" style="background:var(--card);border:1px solid var(--border)">
             <div class="flex items-center justify-between mb-3">
-                <h3 class="font-bold flex items-center gap-2"><i class="fas fa-list text-sm" style="color:var(--accent)"></i> Log Blokiran</h3>
-                <button onclick="clearBlockLog()" class="text-xs font-semibold" style="color:var(--danger)">Bersihkan</button>
+                <div class="flex items-center gap-2">
+                    <div id="bI" class="w-10 h-10 rounded-lg flex items-center justify-center sha" style="background:rgba(45,212,160,.12)"><i class="fas fa-shield-alt text-lg" style="color:var(--success)"></i></div>
+                    <div><h3 class="font-bold" id="bT">Aktif</h3><p class="text-xs" style="color:var(--muted)">Melindungi dari popup</p></div>
+                </div>
+                <button onclick="togBL()" id="bB" class="px-4 py-1.5 rounded-lg font-bold text-sm" style="background:var(--success);color:#000"><i class="fas fa-power-off mr-1"></i>Aktif</button>
             </div>
-            <div id="blockLog" class="space-y-2 max-h-64 overflow-y-auto" style="scrollbar-width:thin">
-                <p class="text-xs text-center py-6" style="color:var(--border)">Belum ada yang diblokir</p>
+            <div class="grid grid-cols-3 gap-2">
+                <div class="text-center p-2 rounded-lg" style="background:var(--bg)"><div class="text-lg font-black" style="color:var(--success)" id="bc1">0</div><div class="text-xs" style="color:var(--muted)">Blocked</div></div>
+                <div class="text-center p-2 rounded-lg" style="background:var(--bg)"><div class="text-lg font-black" style="color:var(--accent)" id="bc2">0</div><div class="text-xs" style="color:var(--muted)">Whitelist</div></div>
+                <div class="text-center p-2 rounded-lg" style="background:var(--bg)"><div class="text-lg font-black" style="color:var(--danger)" id="bc3">0</div><div class="text-xs" style="color:var(--muted)">Blacklist</div></div>
             </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+            <div class="rounded-xl p-4" style="background:var(--card);border:1px solid var(--border)"><h3 class="font-bold mb-1 text-sm flex items-center gap-1.5"><i class="fas fa-ban text-xs" style="color:var(--danger)"></i>Blacklist</h3><p class="text-xs mb-2" style="color:var(--muted)">Domain yang diblokir</p><div class="flex gap-2 mb-2"><input type="text" id="blI" placeholder="ads.example.com" class="flex-1 px-2 py-1.5 rounded text-xs" style="background:var(--bg);border:1px solid var(--border);color:var(--fg)"><button onclick="addBL('blacklist')" class="px-2 py-1.5 rounded text-xs font-bold" style="background:var(--danger);color:white"><i class="fas fa-plus"></i></button></div><div id="blL" class="space-y-1 max-h-32 overflow-y-auto" style="scrollbar-width:thin"></div></div>
+            <div class="rounded-xl p-4" style="background:var(--card);border:1px solid var(--border)"><h3 class="font-bold mb-1 text-sm flex items-center gap-1.5"><i class="fas fa-check-circle text-xs" style="color:var(--success)"></i>Whitelist</h3><p class="text-xs mb-2" style="color:var(--muted)">Domain yang diizinkan</p><div class="flex gap-2 mb-2"><input type="text" id="wlI" placeholder="vidsrc.xyz" class="flex-1 px-2 py-1.5 rounded text-xs" style="background:var(--bg);border:1px solid var(--border);color:var(--fg)"><button onclick="addBL('whitelist')" class="px-2 py-1.5 rounded text-xs font-bold" style="background:var(--success);color:black"><i class="fas fa-plus"></i></button></div><div id="wlL" class="space-y-1 max-h-32 overflow-y-auto" style="scrollbar-width:thin"></div></div>
+        </div>
+        <div class="rounded-xl p-4 mb-5" style="background:var(--card);border:1px solid var(--border)">
+            <h3 class="font-bold mb-3 text-sm flex items-center gap-1.5"><i class="fas fa-sliders-h text-xs" style="color:var(--accent)"></i>Opsi</h3>
+            <div class="space-y-2.5">
+                <label class="flex items-center justify-between cursor-pointer"><span class="text-sm">Blokir window.open()</span><input type="checkbox" id="o1" checked onchange="saveBO()" class="w-4 h-4 accent-amber-500"></label>
+                <label class="flex items-center justify-between cursor-pointer"><span class="text-sm">Blokir overlay iklan</span><input type="checkbox" id="o2" checked onchange="saveBO()" class="w-4 h-4 accent-amber-500"></label>
+                <label class="flex items-center justify-between cursor-pointer"><span class="text-sm">Blokir iframe eksternal</span><input type="checkbox" id="o3" onchange="saveBO()" class="w-4 h-4 accent-amber-500"></label>
+            </div>
+        </div>
+        <div class="rounded-xl p-4" style="background:var(--card);border:1px solid var(--border)">
+            <div class="flex items-center justify-between mb-2"><h3 class="font-bold text-sm flex items-center gap-1.5"><i class="fas fa-list text-xs" style="color:var(--accent)"></i>Log</h3><button onclick="clrLog()" class="text-xs font-semibold" style="color:var(--danger)">Bersihkan</button></div>
+            <div id="bLog" class="space-y-1.5 max-h-48 overflow-y-auto" style="scrollbar-width:thin"><p class="text-xs text-center py-4" style="color:var(--border)">Kosong</p></div>
         </div>
     </div>
 </section>
-
 </main>
 
-<!-- LOGIN MODAL -->
-<div id="loginModal" class="hidden">
-    <div class="modal-overlay" onclick="closeLoginModal()">
-        <div class="modal-content w-full max-w-sm mx-4 p-8 rounded-2xl" style="background:var(--bg-elevated);border:1px solid var(--border)" onclick="event.stopPropagation()">
-            <div class="text-center mb-6">
-                <div class="w-16 h-16 mx-auto rounded-xl flex items-center justify-center mb-4" style="background:var(--accent-glow);border:1px solid rgba(230,168,23,0.3)"><i class="fas fa-shield-alt text-2xl" style="color:var(--accent)"></i></div>
-                <h3 class="text-xl font-bold mb-1">Admin Login</h3>
-                <p class="text-xs" style="color:var(--muted)">Masuk untuk mengelola koleksi film</p>
-            </div>
-            <form onsubmit="handleLogin(event)" class="space-y-4">
-                <div><label class="block text-xs font-semibold mb-1" style="color:var(--muted)">Username</label><div class="relative"><input type="text" id="loginUser" required autocomplete="off" placeholder="admin" class="w-full px-4 py-3 pl-10 rounded-lg text-sm" style="background:var(--card);border:1px solid var(--border);color:var(--fg)"><i class="fas fa-user absolute left-3 top-1/2 -translate-y-1/2 text-xs" style="color:var(--muted)"></i></div></div>
-                <div><label class="block text-xs font-semibold mb-1" style="color:var(--muted)">Password</label><div class="relative"><input type="password" id="loginPass" required placeholder="********" class="w-full px-4 py-3 pl-10 pr-10 rounded-lg text-sm" style="background:var(--card);border:1px solid var(--border);color:var(--fg)"><i class="fas fa-lock absolute left-3 top-1/2 -translate-y-1/2 text-xs" style="color:var(--muted)"></i><button type="button" onclick="togglePassVis()" class="absolute right-3 top-1/2 -translate-y-1/2 text-xs" style="color:var(--muted)"><i class="fas fa-eye" id="passVisIcon"></i></button></div></div>
-                <div id="loginError" class="hidden text-xs font-semibold px-3 py-2 rounded-lg" style="background:rgba(232,64,87,0.1);color:var(--danger)">Username atau password salah!</div>
-                <button type="submit" class="w-full py-3 rounded-lg font-bold text-sm text-black" style="background:var(--accent)"><i class="fas fa-sign-in-alt mr-2"></i>Masuk</button>
-            </form>
-            <div class="mt-5 pt-4 text-center" style="border-top:1px solid var(--border)"><p class="text-xs" style="color:var(--border)">Default: admin / admin123</p></div>
-        </div>
-    </div>
-</div>
+<!-- LOGIN -->
+<div id="lM" class="hide"><div class="mo" onclick="closeLog()"><div class="mc2 w-full max-w-xs mx-3 p-6 rounded-xl" style="background:var(--bg2);border:1px solid var(--border)" onclick="event.stopPropagation()">
+    <div class="text-center mb-5"><div class="w-12 h-12 mx-auto rounded-lg flex items-center justify-center mb-3" style="background:var(--accent-g);border:1px solid rgba(230,168,23,.25)"><i class="fas fa-shield-alt text-lg" style="color:var(--accent)"></i></div><h3 class="text-lg font-bold mb-0.5">Admin Login</h3><p class="text-xs" style="color:var(--muted)">Masuk untuk mengelola film</p></div>
+    <form onsubmit="doLogin(event)" class="space-y-3">
+        <div><label class="block text-xs font-semibold mb-1" style="color:var(--muted)">Username</label><input type="text" id="lU" required autocomplete="off" placeholder="admin" class="w-full px-3 py-2.5 rounded-lg text-sm" style="background:var(--card);border:1px solid var(--border);color:var(--fg)"></div>
+        <div><label class="block text-xs font-semibold mb-1" style="color:var(--muted)">Password</label><div class="relative"><input type="password" id="lP" required placeholder="********" class="w-full px-3 py-2.5 pr-9 rounded-lg text-sm" style="background:var(--card);border:1px solid var(--border);color:var(--fg)"><button type="button" onclick="togPV()" class="absolute right-2.5 top-1/2 -translate-y-1/2" style="color:var(--muted)"><i class="fas fa-eye text-xs" id="pVI"></i></button></div></div>
+        <div id="lE" class="hide text-xs font-semibold px-2.5 py-2 rounded-lg" style="background:rgba(232,64,87,.1);color:var(--danger)">Username atau password salah!</div>
+        <button type="submit" class="w-full py-2.5 rounded-lg font-bold text-sm text-black" style="background:var(--accent)"><i class="fas fa-sign-in-alt mr-1"></i>Masuk</button>
+    </form>
+    <p class="text-center text-xs mt-3" style="color:var(--border)">Default: admin / admin123</p>
+</div></div></div>
 
-<!-- PLAYER MODAL -->
-<div id="playerModal" class="hidden">
-    <div class="modal-overlay" style="background:rgba(0,0,0,0.92)" onclick="closePlayer(event)">
-        <div class="modal-content w-full max-w-6xl mx-4" onclick="event.stopPropagation()">
-            <div class="flex items-center justify-between mb-3">
-                <div class="flex items-center gap-3"><h3 class="text-lg font-bold" id="playerTitle"></h3><span class="text-xs px-2 py-1 rounded" style="background:var(--card);color:var(--muted)" id="playerCategory"></span><span class="text-xs" style="color:var(--muted)" id="playerYear"></span></div>
-                <div class="flex items-center gap-2">
-                    <button onclick="copyIframeUrl()" class="px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-1" style="background:var(--card);border:1px solid var(--border);color:var(--muted)" title="Copy URL"><i class="fas fa-link"></i><span class="hidden sm:inline">Copy</span></button>
-                    <button onclick="toggleFullscreen()" id="fullscreenBtn" class="px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-1" style="background:var(--accent);color:black" title="Fullscreen"><i class="fas fa-expand" id="fullscreenIcon"></i><span class="hidden sm:inline">Fullscreen</span></button>
-                    <button onclick="closePlayer()" class="px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-1" style="background:var(--card);border:1px solid var(--border);color:var(--danger)" title="Tutup"><i class="fas fa-times"></i></button>
-                </div>
-            </div>
-            <div class="player-wrapper" style="border:1px solid var(--border)" id="playerWrapper"></div>
-            <div class="mt-3" id="playerDesc" style="color:var(--muted);font-size:13px"></div>
+<!-- PLAYER -->
+<div id="pM" class="hide"><div class="mo" style="background:rgba(0,0,0,.94)" onclick="closePl(event)"><div class="mc2 w-full max-w-6xl mx-2 sm:mx-4" onclick="event.stopPropagation()">
+    <div class="flex items-center justify-between mb-2">
+        <div class="flex items-center gap-2 min-w-0"><h3 class="text-sm sm:text-base font-bold truncate" id="pT"></h3><span class="text-xs px-1.5 py-0.5 rounded flex-shrink-0" style="background:var(--card);color:var(--muted)" id="pC"></span></div>
+        <div class="flex items-center gap-1.5 flex-shrink-0">
+            <button onclick="cpURL()" class="px-2 py-1.5 rounded-lg text-xs font-semibold" style="background:var(--card);border:1px solid var(--border);color:var(--muted)" title="Copy"><i class="fas fa-link"></i></button>
+            <button onclick="togFS()" id="fSB" class="px-2.5 py-1.5 rounded-lg text-xs font-bold" style="background:var(--accent);color:black" title="Fullscreen"><i class="fas fa-expand" id="fSI"></i></button>
+            <button onclick="closePl()" class="px-2 py-1.5 rounded-lg text-xs font-semibold" style="background:var(--card);border:1px solid var(--border);color:var(--danger)" title="Tutup"><i class="fas fa-times"></i></button>
         </div>
     </div>
-</div>
+    <div class="pw" style="border:1px solid var(--border)" id="pW"></div>
+    <div class="mt-2 text-xs" id="pD" style="color:var(--muted)"></div>
+</div></div></div>
 
-<!-- EDIT MODAL -->
-<div id="editModal" class="hidden">
-    <div class="modal-overlay" onclick="closeEditModal()">
-        <div class="modal-content w-full max-w-lg mx-4 p-6 rounded-xl" style="background:var(--bg-elevated);border:1px solid var(--border)" onclick="event.stopPropagation()">
-            <h3 class="text-xl font-bold mb-6">Edit Film</h3>
-            <form id="editForm" onsubmit="handleEdit(event)" class="space-y-4">
-                <input type="hidden" id="editId">
-                <div><label class="block text-xs font-semibold mb-1" style="color:var(--muted)">Judul</label><input type="text" id="editTitle" required class="w-full px-3 py-2 rounded-lg text-sm" style="background:var(--card);border:1px solid var(--border);color:var(--fg)"></div>
-                <div><label class="block text-xs font-semibold mb-1" style="color:var(--muted)">URL Iframe</label><input type="url" id="editIframe" required class="w-full px-3 py-2 rounded-lg text-sm" style="background:var(--card);border:1px solid var(--border);color:var(--fg)"></div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div><label class="block text-xs font-semibold mb-1" style="color:var(--muted)">Kategori</label><select id="editCategory" required class="w-full px-3 py-2 rounded-lg text-sm" style="background:var(--card);border:1px solid var(--border);color:var(--fg)"><option value="Action">Action</option><option value="Drama">Drama</option><option value="Sci-Fi">Sci-Fi</option><option value="Horror">Horror</option><option value="Comedy">Comedy</option><option value="Thriller">Thriller</option><option value="Romance">Romance</option><option value="Animation">Animation</option><option value="Documentary">Documentary</option><option value="Anime">Anime</option></select></div>
-                    <div><label class="block text-xs font-semibold mb-1" style="color:var(--muted)">Tahun</label><input type="number" id="editYear" class="w-full px-3 py-2 rounded-lg text-sm" style="background:var(--card);border:1px solid var(--border);color:var(--fg)"></div>
-                </div>
-                <div><label class="block text-xs font-semibold mb-1" style="color:var(--muted)">Poster URL</label><input type="url" id="editPoster" class="w-full px-3 py-2 rounded-lg text-sm" style="background:var(--card);border:1px solid var(--border);color:var(--fg)"></div>
-                <div><label class="block text-xs font-semibold mb-1" style="color:var(--muted)">Rating</label><input type="number" id="editRating" min="0" max="10" class="w-full px-3 py-2 rounded-lg text-sm" style="background:var(--card);border:1px solid var(--border);color:var(--fg)"></div>
-                <div><label class="block text-xs font-semibold mb-1" style="color:var(--muted)">Deskripsi</label><textarea id="editDesc" rows="2" class="w-full px-3 py-2 rounded-lg text-sm resize-none" style="background:var(--card);border:1px solid var(--border);color:var(--fg)"></textarea></div>
-                <div><label class="block text-xs font-semibold mb-1" style="color:var(--muted)">Iframe Code</label><textarea id="editIframeCode" rows="2" class="w-full px-3 py-2 rounded-lg text-sm resize-none font-mono" style="background:var(--card);border:1px solid var(--border);color:var(--fg)"></textarea></div>
-                <div class="flex items-center gap-3 pt-2"><button type="submit" class="px-6 py-2 rounded-lg font-bold text-sm text-black" style="background:var(--accent)">Simpan</button><button type="button" onclick="closeEditModal()" class="px-5 py-2 rounded-lg text-sm" style="background:var(--card);border:1px solid var(--border);color:var(--muted)">Batal</button></div>
-            </form>
+<!-- EDIT -->
+<div id="eM" class="hide"><div class="mo" onclick="closeEd()"><div class="mc2 w-full max-w-md mx-3 p-5 rounded-xl" style="background:var(--bg2);border:1px solid var(--border)" onclick="event.stopPropagation()">
+    <h3 class="text-lg font-bold mb-4">Edit Film</h3>
+    <form id="eF" onsubmit="doEdit(event)" class="space-y-3">
+        <input type="hidden" id="eId">
+        <div><label class="block text-xs font-semibold mb-1" style="color:var(--muted)">Judul</label><input type="text" id="eT" required class="w-full px-3 py-2 rounded-lg text-sm" style="background:var(--card);border:1px solid var(--border);color:var(--fg)"></div>
+        <div><label class="block text-xs font-semibold mb-1" style="color:var(--muted)">Iframe URL</label><input type="url" id="eI" required class="w-full px-3 py-2 rounded-lg text-sm" style="background:var(--card);border:1px solid var(--border);color:var(--fg)"></div>
+        <div class="grid grid-cols-2 gap-2">
+            <div><label class="block text-xs font-semibold mb-1" style="color:var(--muted)">Kategori</label><select id="eC" required class="w-full px-2 py-2 rounded-lg text-sm" style="background:var(--card);border:1px solid var(--border);color:var(--fg)"><option>Action</option><option>Drama</option><option>Sci-Fi</option><option>Horror</option><option>Comedy</option><option>Thriller</option><option>Romance</option><option>Animation</option><option>Documentary</option><option>Anime</option></select></div>
+            <div><label class="block text-xs font-semibold mb-1" style="color:var(--muted)">Tahun</label><input type="number" id="eY" class="w-full px-2 py-2 rounded-lg text-sm" style="background:var(--card);border:1px solid var(--border);color:var(--fg)"></div>
         </div>
-    </div>
-</div>
+        <div><label class="block text-xs font-semibold mb-1" style="color:var(--muted)">Poster URL</label><input type="url" id="eP" class="w-full px-3 py-2 rounded-lg text-sm" style="background:var(--card);border:1px solid var(--border);color:var(--fg)"></div>
+        <div><label class="block text-xs font-semibold mb-1" style="color:var(--muted)">Rating</label><input type="number" id="eR" min="0" max="10" class="w-full px-3 py-2 rounded-lg text-sm" style="background:var(--card);border:1px solid var(--border);color:var(--fg)"></div>
+        <div><label class="block text-xs font-semibold mb-1" style="color:var(--muted)">Deskripsi</label><textarea id="eD" rows="2" class="w-full px-3 py-2 rounded-lg text-sm resize-none" style="background:var(--card);border:1px solid var(--border);color:var(--fg)"></textarea></div>
+        <div><label class="block text-xs font-semibold mb-1" style="color:var(--muted)">Iframe Code</label><textarea id="eIC" rows="2" class="w-full px-3 py-2 rounded-lg text-sm resize-none font-mono" style="background:var(--card);border:1px solid var(--border);color:var(--fg)"></textarea></div>
+        <div class="flex items-center gap-2 pt-1"><button type="submit" class="px-5 py-2 rounded-lg font-bold text-sm text-black" style="background:var(--accent)">Simpan</button><button type="button" onclick="closeEd()" class="px-4 py-2 rounded-lg text-sm" style="background:var(--card);border:1px solid var(--border);color:var(--muted)">Batal</button></div>
+    </form>
+</div></div></div>
 
 <!-- DELETE CONFIRM -->
-<div id="deleteConfirmModal" class="hidden"></div>
+<div id="dCM" class="hide"></div>
 
 <script>
-// ===================== CONFIG =====================
-const STORAGE_KEY = 'cinevault_movies';
-const ADMIN_KEY = 'cinevault_admin';
-const BLOCKER_KEY = 'cinevault_blocker';
-const ADMIN_USER = 'admin';
-const ADMIN_PASS = 'admin123';
+// ============ CONFIG ============
+const SK='cinevault_movies',AK='cinevault_admin',BK='cinevault_blocker';
+const AU='admin',AP='admin123';
+let movies=[],curF='all',curURL='',isAd=false,isFS=false;
 
-let movies = [];
-let currentFilter = 'all';
-let currentPlayerUrl = '';
-let isAdmin = false;
-let isFullscreen = false;
-
-// Blocker state
-let blockerConfig = {
-    enabled: true,
-    blacklist: ['ads.google.com', 'doubleclick.net', 'adnxs.com', 'popads.net', 'propellerads.com', 'juicyads.com', 'exoclick.com', 'trafficjunky.com', 'adsterra.com', 'hilltopads.net', 'clickadu.com', 'pushnotifications.com', 'pushengage.com', 'notix.io', 'popunder.net', 'adblocker-detector.com'],
-    whitelist: ['vidsrc.xyz', 'vidsrc.to', 'multiembed.mov', 'autoembed.co', '2embed.cc', 'superembed.stream', 'embed.su', 'moviesapi.club', 'youtube.com', 'youtu.be'],
-    options: { blockWindowOpen: true, blockOverlays: true, blockIframes: false, blockRedirect: true },
-    log: [],
-    blockedCount: 0
+// Blocker
+let BC={enabled:true,
+    blacklist:['ads.google.com','doubleclick.net','adnxs.com','popads.net','propellerads.com','juicyads.com','exoclick.com','trafficjunky.com','adsterra.com','hilltopads.net','clickadu.com','pushnotifications.com','popunder.net'],
+    whitelist:['vidsrc.xyz','vidsrc.to','multiembed.mov','autoembed.co','2embed.cc','superembed.stream','embed.su','moviesapi.club','youtube.com','youtu.be'],
+    options:{blockWO:true,blockOV:true,blockIF:false},
+    log:[],blockedCount:0
 };
 
-const sampleMovies = [
-    { id:'cv_1',title:'Interstellar',iframeUrl:'https://vidsrc.xyz/embed/tt0816692',iframeCode:'',poster:'https://picsum.photos/seed/interstellar/400/600.jpg',category:'Sci-Fi',year:2014,rating:9,desc:'Seorang petani ex-NASA melintasi wormhole untuk mencari planet baru bagi umat manusia.',active:true,views:1240,createdAt:Date.now()-86400000*5 },
-    { id:'cv_2',title:'The Dark Knight',iframeUrl:'https://vidsrc.xyz/embed/tt0468569',iframeCode:'',poster:'https://picsum.photos/seed/darkknight/400/600.jpg',category:'Action',year:2008,rating:9,desc:'Batman menghadapi ancaman terbesar dari Joker yang menguji batas keadilan Gotham.',active:true,views:980,createdAt:Date.now()-86400000*3 },
-    { id:'cv_3',title:'Spirited Away',iframeUrl:'https://vidsrc.xyz/embed/tt0245429',iframeCode:'',poster:'https://picsum.photos/seed/spirited/400/600.jpg',category:'Animation',year:2001,rating:9,desc:'Chihiro terjebak di dunia roh dan harus bekerja di pemandian untuk menyelamatkan orang tuanya.',active:true,views:756,createdAt:Date.now()-86400000*2 },
-    { id:'cv_4',title:'Parasite',iframeUrl:'https://vidsrc.xyz/embed/tt6751668',iframeCode:'',poster:'https://picsum.photos/seed/parasite/400/600.jpg',category:'Thriller',year:2019,rating:8,desc:'Keluarga miskin menyusup ke kehidupan keluarga kaya dengan konsekuensi mengerikan.',active:true,views:632,createdAt:Date.now()-86400000 },
-    { id:'cv_5',title:'Dune: Part Two',iframeUrl:'https://vidsrc.xyz/embed/tt15239678',iframeCode:'',poster:'https://picsum.photos/seed/dune2/400/600.jpg',category:'Sci-Fi',year:2024,rating:8,desc:'Paul Atreides bersatu dengan Fremen untuk membalas dendam.',active:true,views:2100,createdAt:Date.now()-3600000 },
-    { id:'cv_6',title:'Oppenheimer',iframeUrl:'https://vidsrc.xyz/embed/tt15398776',iframeCode:'',poster:'https://picsum.photos/seed/oppenheimer/400/600.jpg',category:'Drama',year:2023,rating:8,desc:'Kisah J. Robert Oppenheimer dan penciptaan bom atom.',active:true,views:1890,createdAt:Date.now()-7200000 }
+const sampleMovies=[
+    {id:'cv_1',title:'Interstellar',iframeUrl:'https://vidsrc.xyz/embed/tt0816692',iframeCode:'',poster:'https://picsum.photos/seed/interstellar/400/600.jpg',category:'Sci-Fi',year:2014,rating:9,desc:'Seorang petani ex-NASA melintasi wormhole untuk mencari planet baru bagi umat manusia.',active:true,views:1240,createdAt:Date.now()-86400000*5},
+    {id:'cv_2',title:'The Dark Knight',iframeUrl:'https://vidsrc.xyz/embed/tt0468569',iframeCode:'',poster:'https://picsum.photos/seed/darkknight/400/600.jpg',category:'Action',year:2008,rating:9,desc:'Batman menghadapi Joker yang menguji batas keadilan Gotham.',active:true,views:980,createdAt:Date.now()-86400000*3},
+    {id:'cv_3',title:'Spirited Away',iframeUrl:'https://vidsrc.xyz/embed/tt0245429',iframeCode:'',poster:'https://picsum.photos/seed/spirited/400/600.jpg',category:'Animation',year:2001,rating:9,desc:'Chihiro terjebak di dunia roh dan harus menyelamatkan orang tuanya.',active:true,views:756,createdAt:Date.now()-86400000*2},
+    {id:'cv_4',title:'Parasite',iframeUrl:'https://vidsrc.xyz/embed/tt6751668',iframeCode:'',poster:'https://picsum.photos/seed/parasite/400/600.jpg',category:'Thriller',year:2019,rating:8,desc:'Keluarga miskin menyusup ke kehidupan keluarga kaya.',active:true,views:632,createdAt:Date.now()-86400000},
+    {id:'cv_5',title:'Dune: Part Two',iframeUrl:'https://vidsrc.xyz/embed/tt15239678',iframeCode:'',poster:'https://picsum.photos/seed/dune2/400/600.jpg',category:'Sci-Fi',year:2024,rating:8,desc:'Paul Atreides bersatu dengan Fremen untuk membalas dendam.',active:true,views:2100,createdAt:Date.now()-3600000},
+    {id:'cv_6',title:'Oppenheimer',iframeUrl:'https://vidsrc.xyz/embed/tt15398776',iframeCode:'',poster:'https://picsum.photos/seed/oppenheimer/400/600.jpg',category:'Drama',year:2023,rating:8,desc:'Kisah penciptaan bom atom yang mengubah dunia.',active:true,views:1890,createdAt:Date.now()-7200000}
 ];
 
-// ===================== DATA =====================
-function loadMovies() { try { const s=localStorage.getItem(STORAGE_KEY); if(s){movies=JSON.parse(s)}else{movies=[...sampleMovies];saveMovies()} }catch(e){movies=[...sampleMovies];saveMovies()} }
-function saveMovies() { localStorage.setItem(STORAGE_KEY,JSON.stringify(movies)); }
-function genId() { return 'cv_'+Date.now().toString(36)+Math.random().toString(36).substr(2,5); }
+// ============ DATA ============
+function loadM(){try{const s=localStorage.getItem(SK);movies=s?JSON.parse(s):[...sampleMovies];if(!s)saveM()}catch(e){movies=[...sampleMovies];saveM()}}
+function saveM(){localStorage.setItem(SK,JSON.stringify(movies))}
+function gId(){return'cv_'+Date.now().toString(36)+Math.random().toString(36).substr(2,5)}
 
-// ===================== BLOCKER DATA =====================
-function loadBlockerConfig() {
-    try {
-        const s = localStorage.getItem(BLOCKER_KEY);
-        if (s) {
-            const parsed = JSON.parse(s);
-            // Merge with defaults to handle new fields
-            blockerConfig = { ...blockerConfig, ...parsed, options: { ...blockerConfig.options, ...(parsed.options || {}) } };
-        }
-    } catch(e) {}
-}
-function saveBlockerConfig() { localStorage.setItem(BLOCKER_KEY, JSON.stringify(blockerConfig)); }
+// ============ BLOCKER DATA ============
+function loadBC(){try{const s=localStorage.getItem(BK);if(s){const p=JSON.parse(s);BC={...BC,...p,options:{...BC.options,...(p.options||{})}}}}catch(e){}}
+function saveBC(){localStorage.setItem(BK,JSON.stringify(BC))}
 
-// ===================== POPUP BLOCKER ENGINE =====================
-function initBlocker() {
-    if (!blockerConfig.enabled) return;
-
-    // 1. Override window.open
-    if (blockerConfig.options.blockWindowOpen) {
-        const originalOpen = window.open;
-        window.open = function(url, name, specs) {
-            if (!blockerConfig.enabled || !url) return null;
-            const domain = extractDomain(url);
-            if (isDomainBlocked(domain)) {
-                logBlock('window.open', url, domain);
-                return null; // Block it
-            }
-            return originalOpen.call(window, url, name, specs);
+// ============ POPUP BLOCKER ============
+function initBL(){
+    if(!BC.enabled)return;
+    // Override window.open
+    if(BC.options.blockWO){
+        const orig=window.open;
+        window.open=function(url){
+            if(!BC.enabled||!url)return null;
+            const d=extD(url);
+            if(isDB(d)){logBL('window.open',url,d);return null}
+            return orig.apply(this,arguments);
         };
     }
-
-    // 2. Block popups via beforeunload (redirect blocking)
-    if (blockerConfig.options.blockRedirect) {
-        const originalAssign = window.location.assign;
-        const originalReplace = window.location.replace;
-        // We use a flag to allow our own navigations
-        window.__cinevaultAllowNav = true;
+    // MutationObserver for overlays
+    if(BC.options.blockOV){
+        new MutationObserver(mutations=>{
+            if(!BC.enabled||!BC.options.blockOV)return;
+            for(const m of mutations)for(const n of m.addedNodes){
+                if(n.nodeType!==1)continue;
+                chkOV(n);
+            }
+        }).observe(document.body,{childList:true,subtree:true});
     }
-
-    // 3. MutationObserver to kill overlay/popups injected into DOM
-    if (blockerConfig.options.blockOverlays) {
-        const observer = new MutationObserver((mutations) => {
-            if (!blockerConfig.enabled || !blockerConfig.options.blockOverlays) return;
-            for (const mutation of mutations) {
-                for (const node of mutation.addedNodes) {
-                    if (node.nodeType !== 1) continue;
-                    // Check for suspicious overlay elements
-                    checkAndKillOverlay(node);
-                }
+    // Iframe observer
+    if(BC.options.blockIF){
+        new MutationObserver(mutations=>{
+            if(!BC.enabled||!BC.options.blockIF)return;
+            for(const m of mutations)for(const n of m.addedNodes){
+                if(n.nodeType===1&&n.tagName==='IFRAME')chkIF(n);
+            }
+        }).observe(document.body,{childList:true,subtree:true});
+    }
+    // Periodic sweep
+    setInterval(()=>{
+        if(!BC.enabled||!BC.options.blockOV)return;
+        document.querySelectorAll('div,section,aside').forEach(el=>{
+            if(isOur(el))return;
+            const id=(el.id||'').toLowerCase(),cls=(typeof el.className==='string'?el.className:'').toLowerCase();
+            if(id.includes('ad')||id.includes('popup')||id.includes('overlay')||cls.includes('ad-')||cls.includes('popup')){
+                if(isAdOL(el))killEl(el,'sweep');
             }
         });
-        observer.observe(document.body, { childList: true, subtree: true });
-    }
+    },2500);
+}
+function extD(u){try{if(!u||u==='about:blank'||u.startsWith('javascript:'))return'';return new URL(u,location.href).hostname.replace('www.','')}catch(e){return''}}
+function isDB(d){if(!d)return false;for(const w of BC.whitelist)if(d===w||d.endsWith('.'+w))return false;for(const b of BC.blacklist)if(d===b||d.endsWith('.'+b))return true;return false}
+function isOur(el){return!!(el.closest('#pM')||el.closest('#lM')||el.closest('#eM')||el.closest('#dCM')||el.closest('nav')||el.closest('main')||el.closest('.tc'))}
+function isAdOL(el){if(isOur(el))return false;const s=getComputedStyle(el);const fix=s.position==='fixed'||s.position==='absolute';const hi=parseInt(s.zIndex)>100&&s.zIndex!=='auto';return fix&&hi}
+function chkOV(el){if(isOur(el))return;if(el.tagName==='IFRAME'){chkIF(el);return}const s=getComputedStyle(el);if((s.position==='fixed'||s.position==='absolute')&&parseInt(s.zIndex)>1000){const ifs=el.querySelectorAll('iframe');let bl=false;ifs.forEach(i=>{const d=extD(i.src||'');if(d&&isDB(d))bl=true});if(bl)killEl(el,'overlay')}}
+function chkIF(i){const d=extD(i.src||i.getAttribute('src')||'');if(d&&isDB(d))killEl(i,'iframe',d)}
+function killEl(el,t,d){const src=(el.src||el.getAttribute('src')||el.id||'x').toString().substring(0,60);logBL(t,src,d||extD(src)||'?');el.remove()}
+function logBL(t,u,d){BC.blockedCount++;BC.log.unshift({type:t,url:u,domain:d,time:Date.now()});if(BC.log.length>50)BC.log=BC.log.slice(0,50);saveBC();updSB()}
+function updSB(){const b=document.getElementById('SB');if(BC.enabled&&BC.blockedCount>0){b.classList.remove('hide');b.style.display='flex';document.getElementById('SC').textContent=BC.blockedCount}else{b.classList.add('hide');b.style.display='none'}}
 
-    // 4. Observer for iframes from blocked domains
-    if (blockerConfig.options.blockIframes) {
-        const iframeObserver = new MutationObserver((mutations) => {
-            if (!blockerConfig.enabled || !blockerConfig.options.blockIframes) return;
-            for (const mutation of mutations) {
-                for (const node of mutation.addedNodes) {
-                    if (node.nodeType === 1 && node.tagName === 'IFRAME') {
-                        checkAndKillIframe(node);
-                    }
-                }
-            }
-        });
-        iframeObserver.observe(document.body, { childList: true, subtree: true });
-    }
+function togBL(){BC.enabled=!BC.enabled;saveBC();renBL();updSB();toast(BC.enabled?'Blocker aktif':'Blocker nonaktif',BC.enabled?'success':'error');if(BC.enabled)initBL()}
+function addBL(list){const inp=document.getElementById(list==='blacklist'?'blI':'wlI');const d=inp.value.trim().replace('www.','').toLowerCase();if(!d)return;if(BC[list].includes(d)){toast('Sudah ada','info');return}BC[list].push(d);saveBC();inp.value='';renBL();toast(d+' ditambahkan','success')}
+function rmBL(list,d){BC[list]=BC[list].filter(x=>x!==d);saveBC();renBL();toast(d+' dihapus','info')}
+function saveBO(){BC.options.blockWO=document.getElementById('o1').checked;BC.options.blockOV=document.getElementById('o2').checked;BC.options.blockIF=document.getElementById('o3').checked;saveBC()}
+function clrLog(){BC.log=[];BC.blockedCount=0;saveBC();renBL();updSB();toast('Log dibersihkan','info')}
 
-    // 5. Periodic sweep for overlay elements
-    setInterval(() => {
-        if (!blockerConfig.enabled || !blockerConfig.options.blockOverlays) return;
-        document.querySelectorAll('div, section, aside').forEach(el => {
-            if (el.id && (el.id.includes('ad') || el.id.includes('popup') || el.id.includes('overlay') || el.id.includes('pop-under'))) {
-                if (isAdOverlay(el)) { killElement(el, 'overlay-sweep'); }
-            }
-            if (el.className && typeof el.className === 'string' && (el.className.includes('ad-') || el.className.includes('popup') || el.className.includes('overlay-ad'))) {
-                if (isAdOverlay(el)) { killElement(el, 'overlay-sweep'); }
-            }
-        });
-    }, 2000);
+function renBL(){
+    const i=document.getElementById('bI'),t=document.getElementById('bT'),b=document.getElementById('bB');
+    if(BC.enabled){i.style.background='rgba(45,212,160,.12)';i.innerHTML='<i class="fas fa-shield-alt text-lg" style="color:var(--success)"></i>';i.classList.add('sha');t.textContent='Aktif';t.style.color='var(--success)';b.style.background='var(--success)';b.style.color='#000';b.innerHTML='<i class="fas fa-power-off mr-1"></i>Aktif'}
+    else{i.style.background='rgba(232,64,87,.12)';i.innerHTML='<i class="fas fa-shield-alt text-lg" style="color:var(--danger)"></i>';i.classList.remove('sha');t.textContent='Nonaktif';t.style.color='var(--danger)';b.style.background='var(--danger)';b.style.color='#fff';b.innerHTML='<i class="fas fa-power-off mr-1"></i>Off'}
+    document.getElementById('bc1').textContent=BC.blockedCount;document.getElementById('bc2').textContent=BC.whitelist.length;document.getElementById('bc3').textContent=BC.blacklist.length;
+    document.getElementById('blL').innerHTML=BC.blacklist.map(d=>'<div class="flex items-center justify-between px-2 py-1 rounded text-xs" style="background:var(--bg)"><span style="color:var(--danger)"><i class="fas fa-ban mr-1"></i>'+d+'</span><button onclick="rmBL(\'blacklist\',\''+d+'\')" style="color:var(--muted)"><i class="fas fa-times"></i></button></div>').join('');
+    document.getElementById('wlL').innerHTML=BC.whitelist.map(d=>'<div class="flex items-center justify-between px-2 py-1 rounded text-xs" style="background:var(--bg)"><span style="color:var(--success)"><i class="fas fa-check mr-1"></i>'+d+'</span><button onclick="rmBL(\'whitelist\',\''+d+'\')" style="color:var(--muted)"><i class="fas fa-times"></i></button></div>').join('');
+    document.getElementById('o1').checked=BC.options.blockWO;document.getElementById('o2').checked=BC.options.blockOV;document.getElementById('o3').checked=BC.options.blockIF;
+    const lg=document.getElementById('bLog');
+    if(!BC.log.length){lg.innerHTML='<p class="text-xs text-center py-4" style="color:var(--border)">Kosong</p>'}
+    else{lg.innerHTML=BC.log.slice(0,30).map(e=>{const tm=new Date(e.time).toLocaleTimeString('id-ID');return'<div class="flex items-start gap-1.5 px-2 py-1.5 rounded text-xs" style="background:var(--bg)"><i class="fas fa-ban mt-0.5" style="color:var(--danger)"></i><div class="flex-1 min-w-0"><div class="font-semibold" style="color:var(--danger)">'+e.domain+'</div><div class="truncate" style="color:var(--muted)">'+e.url+'</div></div><span class="whitespace-nowrap" style="color:var(--border)">'+tm+'</span></div>'}).join('')}
 }
 
-function extractDomain(url) {
-    try {
-        if (!url || url === 'about:blank' || url.startsWith('javascript:')) return '';
-        const u = new URL(url, window.location.href);
-        return u.hostname.replace('www.', '');
-    } catch(e) { return ''; }
+// ============ ADMIN AUTH ============
+function chkAd(){isAd=sessionStorage.getItem(AK)==='true';updAdUI()}
+function updAdUI(){
+    const ids=['nU','nM','nB'],mids=['mU','mM','mB'];
+    if(isAd){ids.forEach(id=>document.getElementById(id).classList.remove('hide'));mids.forEach(id=>document.getElementById(id).classList.remove('hide'));document.getElementById('AB').innerHTML='<i class="fas fa-unlock"></i><span class="hidden sm:inline">Logout</span>';document.getElementById('AB').style.cssText='background:rgba(230,168,23,.12);border:1px solid rgba(230,168,23,.25);color:var(--accent)';document.getElementById('hB').innerHTML='<i class="fas fa-plus"></i> Upload';document.getElementById('hB').onclick=()=>goSec('upload')}
+    else{ids.forEach(id=>document.getElementById(id).classList.add('hide'));mids.forEach(id=>document.getElementById(id).classList.add('hide'));document.getElementById('AB').innerHTML='<i class="fas fa-lock"></i><span class="hidden sm:inline">Admin</span>';document.getElementById('AB').style.cssText='background:var(--card);border:1px solid var(--border);color:var(--muted)';document.getElementById('hB').innerHTML='<i class="fas fa-shield-alt"></i> Admin';document.getElementById('hB').onclick=()=>showLogin()}
 }
+function admTog(){if(isAd){isAd=false;sessionStorage.removeItem(AK);updAdUI();goSec('home');toast('Logout','info')}else showLogin()}
+function showLogin(){if(isAd){goSec('upload');return}document.getElementById('lM').classList.remove('hide');document.getElementById('lE').classList.add('hide');document.getElementById('lU').value='';document.getElementById('lP').value='';document.body.style.overflow='hidden';setTimeout(()=>document.getElementById('lU').focus(),100)}
+function closeLog(){document.getElementById('lM').classList.add('hide');document.body.style.overflow=''}
+function doLogin(e){e.preventDefault();if(document.getElementById('lU').value.trim()===AU&&document.getElementById('lP').value===AP){isAd=true;sessionStorage.setItem(AK,'true');updAdUI();closeLog();goSec('upload');toast('Login berhasil!','success')}else{document.getElementById('lE').classList.remove('hide')}}
+function togPV(){const i=document.getElementById('lP'),ic=document.getElementById('pVI');if(i.type==='password'){i.type='text';ic.className='fas fa-eye-slash text-xs'}else{i.type='password';ic.className='fas fa-eye text-xs'}}
 
-function isDomainBlocked(domain) {
-    if (!domain) return false;
-    // Check whitelist first
-    for (const w of blockerConfig.whitelist) {
-        if (domain === w || domain.endsWith('.' + w)) return false;
-    }
-    // Check blacklist
-    for (const b of blockerConfig.blacklist) {
-        if (domain === b || domain.endsWith('.' + b)) return true;
-    }
-    return false;
-}
+// ============ TOAST ============
+function toast(m,t='success'){const c=document.getElementById('TC'),el=document.createElement('div');el.className='tt';const cs={success:'background:var(--success);color:#000',error:'background:var(--danger);color:#fff',info:'background:var(--accent);color:#000'};el.style.cssText=cs[t]||cs.info;const ic={success:'check-circle',error:'exclamation-circle',info:'info-circle'};el.innerHTML='<i class="fas fa-'+(ic[t]||'info-circle')+'" style="margin-right:5px"></i>'+m;c.appendChild(el);setTimeout(()=>el.remove(),3200)}
 
-function isAdOverlay(el) {
-    // Don't kill our own elements
-    if (el.closest('#playerModal') || el.closest('#loginModal') || el.closest('#editModal') || el.closest('#deleteConfirmModal') || el.closest('nav') || el.closest('main') || el.closest('.toast-container')) return false;
-    const style = window.getComputedStyle(el);
-    const isFixed = style.position === 'fixed' || style.position === 'absolute';
-    const isHighZ = parseInt(style.zIndex) > 100 && style.zIndex !== 'auto';
-    const isLarge = parseInt(style.width) > 300 || parseInt(style.height) > 200;
-    const covers = isFixed && (parseInt(style.width) > window.innerWidth * 0.8 || parseInt(style.height) > window.innerHeight * 0.8);
-    return (isFixed && isHighZ) || covers;
-}
-
-function checkAndKillOverlay(el) {
-    if (el.closest('#playerModal') || el.closest('#loginModal') || el.closest('#editModal') || el.closest('#deleteConfirmModal') || el.closest('nav') || el.closest('main') || el.closest('.toast-container')) return;
-    // Check if it's an iframe with blocked domain
-    if (el.tagName === 'IFRAME') {
-        checkAndKillIframe(el);
-        return;
-    }
-    // Check for overlay divs
-    const style = window.getComputedStyle(el);
-    if ((style.position === 'fixed' || style.position === 'absolute') && parseInt(style.zIndex) > 1000) {
-        // Check if it contains iframes from blocked domains
-        const iframes = el.querySelectorAll('iframe');
-        let blocked = false;
-        iframes.forEach(iframe => {
-            const src = iframe.src || iframe.getAttribute('src') || '';
-            const domain = extractDomain(src);
-            if (domain && isDomainBlocked(domain)) {
-                blocked = true;
-            }
-        });
-        // Also check if the element itself has suspicious characteristics
-        if (blocked || (el.id && (el.id.includes('ad') || el.id.includes('pop'))) || (typeof el.className === 'string' && (el.className.includes('ad') || el.className.includes('pop')))) {
-            killElement(el, 'overlay');
-        }
-    }
-}
-
-function checkAndKillIframe(iframe) {
-    const src = iframe.src || iframe.getAttribute('src') || '';
-    const domain = extractDomain(src);
-    if (domain && isDomainBlocked(domain)) {
-        killElement(iframe, 'iframe', domain);
-    }
-}
-
-function killElement(el, type, domain) {
-    const src = el.src || el.getAttribute('src') || el.id || el.className || 'unknown';
-    const d = domain || extractDomain(src) || 'unknown';
-    logBlock(type, src.toString().substring(0, 80), d);
-    el.remove();
-}
-
-function logBlock(type, url, domain) {
-    blockerConfig.blockedCount++;
-    blockerConfig.log.unshift({ type, url, domain, time: Date.now() });
-    if (blockerConfig.log.length > 100) blockerConfig.log = blockerConfig.log.slice(0, 100);
-    saveBlockerConfig();
-    updateShieldBadge();
-}
-
-function updateShieldBadge() {
-    const badge = document.getElementById('shieldBadge');
-    if (blockerConfig.enabled && blockerConfig.blockedCount > 0) {
-        badge.style.display = 'flex';
-        document.getElementById('shieldCount').textContent = blockerConfig.blockedCount;
-    } else {
-        badge.style.display = 'none';
-    }
-}
-
-function toggleBlocker() {
-    blockerConfig.enabled = !blockerConfig.enabled;
-    saveBlockerConfig();
-    renderBlockerSection();
-    updateShieldBadge();
-    if (blockerConfig.enabled) {
-        initBlocker();
-        showToast('Popup Blocker diaktifkan', 'success');
-    } else {
-        showToast('Popup Blocker dinonaktifkan', 'error');
-    }
-}
-
-function addToList(list) {
-    const input = document.getElementById(list === 'blacklist' ? 'blacklistInput' : 'whitelistInput');
-    const domain = input.value.trim().replace('www.', '').toLowerCase();
-    if (!domain) return;
-    if (blockerConfig[list].includes(domain)) { showToast('Domain sudah ada', 'info'); return; }
-    blockerConfig[list].push(domain);
-    saveBlockerConfig();
-    input.value = '';
-    renderBlockerSection();
-    showToast(`${domain} ditambahkan ke ${list}`, 'success');
-}
-
-function removeFromList(list, domain) {
-    blockerConfig[list] = blockerConfig[list].filter(d => d !== domain);
-    saveBlockerConfig();
-    renderBlockerSection();
-    showToast(`${domain} dihapus dari ${list}`, 'info');
-}
-
-function saveBlockerOptions() {
-    blockerConfig.options.blockWindowOpen = document.getElementById('optBlockWindowOpen').checked;
-    blockerConfig.options.blockOverlays = document.getElementById('optBlockOverlays').checked;
-    blockerConfig.options.blockIframes = document.getElementById('optBlockIframes').checked;
-    blockerConfig.options.blockRedirect = document.getElementById('optBlockRedirect').checked;
-    saveBlockerConfig();
-}
-
-function clearBlockLog() {
-    blockerConfig.log = [];
-    blockerConfig.blockedCount = 0;
-    saveBlockerConfig();
-    renderBlockerSection();
-    updateShieldBadge();
-    showToast('Log dibersihkan', 'info');
-}
-
-function renderBlockerSection() {
-    // Status
-    const icon = document.getElementById('blockerShieldIcon');
-    const text = document.getElementById('blockerStatusText');
-    const btn = document.getElementById('blockerToggleBtn');
-    if (blockerConfig.enabled) {
-        icon.style.background = 'rgba(45,212,160,0.15)';
-        icon.innerHTML = '<i class="fas fa-shield-alt text-xl" style="color:var(--success)"></i>';
-        icon.classList.add('shield-active');
-        text.textContent = 'Blocker Aktif';
-        text.style.color = 'var(--success)';
-        btn.style.background = 'var(--success)'; btn.style.color = '#000';
-        btn.innerHTML = '<i class="fas fa-power-off mr-1"></i> Aktif';
-    } else {
-        icon.style.background = 'rgba(232,64,87,0.15)';
-        icon.innerHTML = '<i class="fas fa-shield-alt text-xl" style="color:var(--danger)"></i>';
-        icon.classList.remove('shield-active');
-        text.textContent = 'Blocker Nonaktif';
-        text.style.color = 'var(--danger)';
-        btn.style.background = 'var(--danger)'; btn.style.color = '#fff';
-        btn.innerHTML = '<i class="fas fa-power-off mr-1"></i> Nonaktif';
-    }
-
-    document.getElementById('blockedCount').textContent = blockerConfig.blockedCount;
-    document.getElementById('whitelistCount').textContent = blockerConfig.whitelist.length;
-    document.getElementById('blacklistCount').textContent = blockerConfig.blacklist.length;
-
-    // Blacklist items
-    document.getElementById('blacklistItems').innerHTML = blockerConfig.blacklist.map(d => `
-        <div class="flex items-center justify-between px-3 py-1.5 rounded text-xs" style="background:var(--bg)">
-            <span style="color:var(--danger)"><i class="fas fa-ban mr-1"></i>${d}</span>
-            <button onclick="removeFromList('blacklist','${d}')" class="ml-2" style="color:var(--muted)"><i class="fas fa-times"></i></button>
-        </div>
-    `).join('');
-
-    // Whitelist items
-    document.getElementById('whitelistItems').innerHTML = blockerConfig.whitelist.map(d => `
-        <div class="flex items-center justify-between px-3 py-1.5 rounded text-xs" style="background:var(--bg)">
-            <span style="color:var(--success)"><i class="fas fa-check mr-1"></i>${d}</span>
-            <button onclick="removeFromList('whitelist','${d}')" class="ml-2" style="color:var(--muted)"><i class="fas fa-times"></i></button>
-        </div>
-    `).join('');
-
-    // Options
-    document.getElementById('optBlockWindowOpen').checked = blockerConfig.options.blockWindowOpen;
-    document.getElementById('optBlockOverlays').checked = blockerConfig.options.blockOverlays;
-    document.getElementById('optBlockIframes').checked = blockerConfig.options.blockIframes;
-    document.getElementById('optBlockRedirect').checked = blockerConfig.options.blockRedirect;
-
-    // Log
-    const logEl = document.getElementById('blockLog');
-    if (blockerConfig.log.length === 0) {
-        logEl.innerHTML = '<p class="text-xs text-center py-6" style="color:var(--border)">Belum ada yang diblokir</p>';
-    } else {
-        logEl.innerHTML = blockerConfig.log.slice(0, 50).map(entry => {
-            const time = new Date(entry.time).toLocaleTimeString('id-ID');
-            const typeIcons = { 'window.open':'external-link-alt', 'overlay':'window-restore', 'iframe':'code', 'overlay-sweep':'broom', 'redirect':'directions' };
-            return `<div class="flex items-start gap-2 px-3 py-2 rounded text-xs" style="background:var(--bg)">
-                <i class="fas fa-${typeIcons[entry.type]||'ban'} mt-0.5" style="color:var(--danger)"></i>
-                <div class="flex-1 min-w-0"><div class="font-semibold" style="color:var(--danger)">${entry.domain}</div><div class="truncate" style="color:var(--muted)">${entry.url}</div></div>
-                <span class="whitespace-nowrap" style="color:var(--border)">${time}</span>
-            </div>`;
-        }).join('');
-    }
-}
-
-// ===================== ADMIN AUTH =====================
-function checkAdminSession() { isAdmin = sessionStorage.getItem(ADMIN_KEY)==='true'; updateAdminUI(); }
-function updateAdminUI() {
-    const navs = ['navUpload','navManage','navBlocker'];
-    const mobNavs = ['mobNavUpload','mobNavManage','mobNavBlocker'];
-    const adminBtn = document.getElementById('adminToggleBtn');
-    const heroBtn = document.getElementById('heroAdminBtn');
-    if (isAdmin) {
-        navs.forEach(id=>{document.getElementById(id).classList.remove('hidden')});
-        mobNavs.forEach(id=>{document.getElementById(id).classList.remove('hidden')});
-        adminBtn.innerHTML='<i class="fas fa-unlock"></i> <span class="hidden sm:inline">Logout</span>';
-        adminBtn.style.cssText='background:rgba(230,168,23,0.15);border:1px solid rgba(230,168,23,0.3);color:var(--accent);';
-        heroBtn.innerHTML='<i class="fas fa-plus"></i> Upload Film'; heroBtn.onclick=()=>showSection('upload');
-    } else {
-        navs.forEach(id=>{document.getElementById(id).classList.add('hidden')});
-        mobNavs.forEach(id=>{document.getElementById(id).classList.add('hidden')});
-        adminBtn.innerHTML='<i class="fas fa-lock"></i> <span class="hidden sm:inline">Admin</span>';
-        adminBtn.style.cssText='background:var(--card);border:1px solid var(--border);color:var(--muted);';
-        heroBtn.innerHTML='<i class="fas fa-shield-alt"></i> Admin Panel'; heroBtn.onclick=()=>showLoginModal();
-    }
-}
-function handleAdminToggle() { if(isAdmin){isAdmin=false;sessionStorage.removeItem(ADMIN_KEY);updateAdminUI();showSection('home');showToast('Logout berhasil','info')}else{showLoginModal()} }
-function showLoginModal() { if(isAdmin){showSection('upload');return} document.getElementById('loginModal').classList.remove('hidden');document.getElementById('loginError').classList.add('hidden');document.getElementById('loginUser').value='';document.getElementById('loginPass').value='';document.body.style.overflow='hidden';setTimeout(()=>document.getElementById('loginUser').focus(),100) }
-function closeLoginModal() { document.getElementById('loginModal').classList.add('hidden');document.body.style.overflow='' }
-function handleLogin(e) { e.preventDefault();const u=document.getElementById('loginUser').value.trim();const p=document.getElementById('loginPass').value;if(u===ADMIN_USER&&p===ADMIN_PASS){isAdmin=true;sessionStorage.setItem(ADMIN_KEY,'true');updateAdminUI();closeLoginModal();showSection('upload');showToast('Login berhasil!','success')}else{document.getElementById('loginError').classList.remove('hidden')} }
-function togglePassVis() { const i=document.getElementById('loginPass');const ic=document.getElementById('passVisIcon');if(i.type==='password'){i.type='text';ic.className='fas fa-eye-slash'}else{i.type='password';ic.className='fas fa-eye'} }
-
-// ===================== TOAST =====================
-function showToast(msg,type='success') { const c=document.getElementById('toastContainer');const t=document.createElement('div');t.className='toast';const colors={success:'background:var(--success);color:#000',error:'background:var(--danger);color:#fff',info:'background:var(--accent);color:#000'};t.style.cssText=colors[type]||colors.info;const icons={success:'check-circle',error:'exclamation-circle',info:'info-circle'};t.innerHTML=`<i class="fas fa-${icons[type]||'info-circle'}" style="margin-right:6px"></i>${msg}`;c.appendChild(t);setTimeout(()=>t.remove(),3000) }
-
-// ===================== NAVIGATION =====================
-function showSection(name) {
-    if((name==='upload'||name==='manage'||name==='blocker')&&!isAdmin){showLoginModal();return}
-    ['sectionHome','sectionUpload','sectionManage','sectionBlocker'].forEach(id=>document.getElementById(id).classList.add('hidden'));
-    ['navHome','navUpload','navManage','navBlocker'].forEach(id=>{const el=document.getElementById(id);el.classList.remove('active');el.style.color='var(--muted)'});
-    const map={home:'sectionHome',upload:'sectionUpload',manage:'sectionManage',blocker:'sectionBlocker'};
-    const navMap={home:'navHome',upload:'navUpload',manage:'navManage',blocker:'navBlocker'};
-    document.getElementById(map[name]).classList.remove('hidden');
-    document.getElementById(navMap[name]).classList.add('active');
-    document.getElementById(navMap[name]).style.color='var(--accent)';
-    if(name==='home'){renderMovieGrid();updateStats();renderCategoryFilters()}
-    else if(name==='upload'){renderRatingStars()}
-    else if(name==='manage'){renderManageTable()}
-    else if(name==='blocker'){renderBlockerSection()}
+// ============ NAV ============
+function goSec(n){
+    if((n==='upload'||n==='manage'||n==='blocker')&&!isAd){showLogin();return}
+    ['sH','sU','sM','sBL'].forEach(id=>document.getElementById(id).classList.add('hide'));
+    ['nH','nU','nM','nB'].forEach(id=>{const el=document.getElementById(id);el.classList.remove('a');el.style.color='var(--muted)'});
+    const m={home:['sH','nH'],upload:['sU','nU'],manage:['sM','nM'],blocker:['sBL','nB']};
+    document.getElementById(m[n][0]).classList.remove('hide');document.getElementById(m[n][1]).classList.add('a');document.getElementById(m[n][1]).style.color='var(--accent)';
+    if(n==='home'){renGrid();updSt();renCF()}else if(n==='upload'){renRS()}else if(n==='manage'){renMT()}else if(n==='blocker'){renBL()}
     window.scrollTo({top:0,behavior:'smooth'});
 }
-function toggleMobileMenu(){document.getElementById('mobileMenu').classList.toggle('hidden')}
+function togMob(){document.getElementById('MM').classList.toggle('hide')}
 
-// ===================== CATEGORY =====================
-function renderCategoryFilters(){const c=document.getElementById('categoryFilters');const cats=['all',...new Set(movies.filter(m=>m.active).map(m=>m.category))];c.innerHTML=cats.map(cat=>`<button onclick="filterByCategory('${cat}')" class="tab-btn px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap ${currentFilter===cat?'active':''}" style="background:${currentFilter===cat?'var(--accent-glow)':'var(--card)'};color:${currentFilter===cat?'var(--accent)':'var(--muted)'};border:1px solid ${currentFilter===cat?'rgba(230,168,23,0.3)':'var(--border)'}">${cat==='all'?'Semua':cat}</button>`).join('')}
-function filterByCategory(cat){currentFilter=cat;renderCategoryFilters();renderMovieGrid()}
+// ============ CATEGORY ============
+function renCF(){const c=document.getElementById('CF'),cats=['all',...new Set(movies.filter(m=>m.active).map(m=>m.category))];c.innerHTML=cats.map(cat=>'<button onclick="filtCat(\''+cat+'\')" class="tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap '+(curF===cat?'active':'')+'" style="background:'+(curF===cat?'var(--accent-g)':'var(--card)')+';color:'+(curF===cat?'var(--accent)':'var(--muted)')+';border:1px solid '+(curF===cat?'rgba(230,168,23,.25)':'var(--border)')+'">'+(cat==='all'?'Semua':cat)+'</button>').join('')}
+function filtCat(c){curF=c;renCF();renGrid()}
 
-// ===================== MOVIE GRID =====================
-function renderMovieGrid(){
-    const c=document.getElementById('movieGridInner');const e=document.getElementById('emptyState');const s=document.getElementById('searchInput').value.toLowerCase().trim();
-    let f=movies.filter(m=>m.active);if(currentFilter!=='all')f=f.filter(m=>m.category===currentFilter);if(s)f=f.filter(m=>m.title.toLowerCase().includes(s)||m.category.toLowerCase().includes(s));
-    if(!f.length){c.innerHTML='';e.classList.remove('hidden');return}e.classList.add('hidden');
-    c.innerHTML=f.map((m,i)=>{const isNew=(Date.now()-m.createdAt)<86400000*2;const st='★'.repeat(Math.round(m.rating/2))+'☆'.repeat(5-Math.round(m.rating/2));return`<div class="movie-card rounded-xl overflow-hidden cursor-pointer" style="background:var(--card);border:1px solid var(--border);animation:slideUp 0.4s ease ${i*60}ms both" onclick="openPlayer('${m.id}')"><div class="relative" style="aspect-ratio:2/2.6"><img src="${m.poster||`https://picsum.photos/seed/${m.id}/400/520.jpg`}" alt="${m.title}" class="w-full h-full object-cover" loading="lazy" onerror="this.src='https://picsum.photos/seed/${m.id}/400/520.jpg'"><div class="absolute inset-0" style="background:linear-gradient(to top,var(--card) 0%,transparent 60%)"></div>${isNew?`<div class="absolute top-3 left-3 px-2 py-1 rounded text-xs font-bold" style="background:var(--danger);color:white">BARU</div>`:''}<div class="absolute top-3 right-3 px-2 py-1 rounded text-xs font-bold" style="background:rgba(0,0,0,0.7);color:var(--accent)">${m.category}</div><div class="absolute bottom-3 left-3 right-3"><h3 class="text-base font-bold leading-tight mb-1">${m.title}</h3><div class="flex items-center gap-2"><span class="text-xs" style="color:var(--accent)">${st}</span><span class="text-xs" style="color:var(--muted)">${m.year||''}</span></div></div><div class="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300" style="background:rgba(0,0,0,0.5)"><div class="w-14 h-14 rounded-full flex items-center justify-center" style="background:var(--accent);box-shadow:0 0 30px var(--accent-glow)"><i class="fas fa-play text-black text-lg ml-1"></i></div></div></div>${m.desc?`<div class="px-3 py-2"><p class="text-xs" style="color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${m.desc}</p></div>`:''}<div class="px-3 pb-3 flex items-center justify-between"><span class="text-xs" style="color:var(--muted)"><i class="fas fa-eye mr-1"></i>${m.views.toLocaleString()}</span><span class="text-xs font-semibold" style="color:var(--accent)">${m.rating}/10</span></div></div>`}).join('');
+// ============ GRID ============
+function renGrid(){
+    const c=document.getElementById('GI'),es=document.getElementById('ES');
+    const sv=document.getElementById('SI').value.toLowerCase().trim();
+    let f=movies.filter(m=>m.active);if(curF!=='all')f=f.filter(m=>m.category===curF);if(sv)f=f.filter(m=>m.title.toLowerCase().includes(sv)||m.category.toLowerCase().includes(sv));
+    if(!f.length){c.innerHTML='';es.classList.remove('hide');return}es.classList.add('hide');
+    c.innerHTML=f.map((m,i)=>{const nw=(Date.now()-m.createdAt)<86400000*2;const st='★'.repeat(Math.round(m.rating/2))+'☆'.repeat(5-Math.round(m.rating/2));return'<div class="mc rounded-xl overflow-hidden cursor-pointer" style="background:var(--card);border:1px solid var(--border);animation:su .35s ease '+i*50+'ms both" onclick="openPl(\''+m.id+'\')"><div class="relative" style="aspect-ratio:2/2.8"><img src="'+(m.poster||'https://picsum.photos/seed/'+m.id+'/400/520.jpg')+'" alt="'+m.title+'" class="w-full h-full object-cover" loading="lazy" onerror="this.src=\'https://picsum.photos/seed/'+m.id+'/400/520.jpg\'"><div class="absolute inset-0" style="background:linear-gradient(to top,var(--card) 0%,transparent 55%)"></div>'+(nw?'<div class="absolute top-2 left-2 px-1.5 py-0.5 rounded text-xs font-bold" style="background:var(--danger);color:white">BARU</div>':'')+'<div class="absolute top-2 right-2 px-1.5 py-0.5 rounded text-xs font-bold" style="background:rgba(0,0,0,.7);color:var(--accent)">'+m.category+'</div><div class="absolute bottom-2 left-2 right-2"><h3 class="text-xs sm:text-sm font-bold leading-tight mb-0.5">'+m.title+'</h3><div class="flex items-center gap-1.5"><span class="text-xs" style="color:var(--accent)">'+st+'</span><span class="text-xs" style="color:var(--muted)">'+(m.year||'')+'</span></div></div><div class="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity" style="background:rgba(0,0,0,.45)"><div class="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center" style="background:var(--accent)"><i class="fas fa-play text-black ml-0.5"></i></div></div></div><div class="px-2 py-1.5 flex items-center justify-between"><span class="text-xs" style="color:var(--muted)"><i class="fas fa-eye mr-0.5"></i>'+m.views.toLocaleString()+'</span><span class="text-xs font-semibold" style="color:var(--accent)">'+m.rating+'/10</span></div></div>'}).join('');
 }
-function searchMovies(){renderMovieGrid()}
+function searchMov(){renGrid()}
+function searchMob(){document.getElementById('SI').value=document.getElementById('SIM').value;renGrid()}
 
-// ===================== STATS =====================
-function updateStats(){document.getElementById('statTotal').textContent=movies.length;document.getElementById('statActive').textContent=movies.filter(m=>m.active).length;document.getElementById('statCategories').textContent=new Set(movies.map(m=>m.category)).size;document.getElementById('statViews').textContent=movies.reduce((s,m)=>s+m.views,0).toLocaleString()}
+// ============ STATS ============
+function updSt(){document.getElementById('s1').textContent=movies.length;document.getElementById('s2').textContent=movies.filter(m=>m.active).length;document.getElementById('s3').textContent=new Set(movies.map(m=>m.category)).size;document.getElementById('s4').textContent=movies.reduce((s,m)=>s+m.views,0).toLocaleString()}
 
-// ===================== RATING =====================
-function renderRatingStars(){const c=document.getElementById('ratingStars');const cur=parseInt(document.getElementById('formRating').value)||0;c.innerHTML='';for(let i=1;i<=10;i++){const b=document.createElement('button');b.type='button';b.className='star-btn text-lg';b.style.color=i<=cur?'var(--accent)':'var(--border)';b.innerHTML=i<=cur?'★':'☆';b.onclick=()=>{document.getElementById('formRating').value=i;renderRatingStars()};c.appendChild(b)}}
+// ============ RATING ============
+function renRS(){const c=document.getElementById('RS'),cur=parseInt(document.getElementById('fR').value)||0;c.innerHTML='';for(let i=1;i<=10;i++){const b=document.createElement('button');b.type='button';b.className='sb text-base sm:text-lg';b.style.color=i<=cur?'var(--accent)':'var(--border)';b.innerHTML=i<=cur?'★':'☆';b.onclick=()=>{document.getElementById('fR').value=i;renRS()};c.appendChild(b)}}
 
-// ===================== UPLOAD =====================
-function handleUpload(e){e.preventDefault();const t=document.getElementById('formTitle').value.trim();const iu=document.getElementById('formIframe').value.trim();const ic=document.getElementById('formIframeCode').value.trim();const p=document.getElementById('formPoster').value.trim();const cat=document.getElementById('formCategory').value;const y=parseInt(document.getElementById('formYear').value)||new Date().getFullYear();const r=parseInt(document.getElementById('formRating').value)||5;const d=document.getElementById('formDesc').value.trim();if(!t||!cat){showToast('Judul dan kategori wajib!','error');return}if(!iu&&!ic){showToast('URL/kode iframe wajib!','error');return}movies.unshift({id:genId(),title:t,iframeUrl:iu,iframeCode:ic,poster:p||'',category:cat,year:y,rating:r,desc:d,active:true,views:0,createdAt:Date.now()});saveMovies();showToast(`"${t}" diupload!`,'success');resetForm();showSection('home')}
-function resetForm(){document.getElementById('uploadForm').reset();document.getElementById('formRating').value='0';document.getElementById('iframePreviewBox').classList.add('hidden');renderRatingStars()}
-function previewIframe(){const u=document.getElementById('formIframe').value.trim();if(!u){showToast('Masukkan URL iframe','error');return}document.getElementById('previewIframeEl').src=u;document.getElementById('iframePreviewBox').classList.remove('hidden');showToast('Preview dimuat','info')}
+// ============ UPLOAD ============
+function doUpload(e){e.preventDefault();const t=document.getElementById('fT').value.trim(),iu=document.getElementById('fI').value.trim(),ic=document.getElementById('fIC').value.trim(),p=document.getElementById('fP').value.trim(),cat=document.getElementById('fC').value,y=parseInt(document.getElementById('fY').value)||new Date().getFullYear(),r=parseInt(document.getElementById('fR').value)||5,d=document.getElementById('fD').value.trim();if(!t||!cat){toast('Judul & kategori wajib!','error');return}if(!iu&&!ic){toast('Iframe wajib!','error');return}movies.unshift({id:gId(),title:t,iframeUrl:iu,iframeCode:ic,poster:p||'',category:cat,year:y,rating:r,desc:d,active:true,views:0,createdAt:Date.now()});saveM();toast('"'+t+'" diupload!','success');rstForm();goSec('home')}
+function rstForm(){document.getElementById('UF').reset();document.getElementById('fR').value='0';document.getElementById('fPB').classList.add('hide');renRS()}
+function prevIF(){const u=document.getElementById('fI').value.trim();if(!u){toast('Masukkan URL','error');return}document.getElementById('fPE').src=u;document.getElementById('fPB').classList.remove('hide');toast('Preview dimuat','info')}
 
-// ===================== PLAYER =====================
-function openPlayer(id){const m=movies.find(x=>x.id===id);if(!m)return;m.views++;saveMovies();document.getElementById('playerTitle').textContent=m.title;document.getElementById('playerCategory').textContent=m.category;document.getElementById('playerYear').textContent=m.year||'';document.getElementById('playerDesc').textContent=m.desc||'';const w=document.getElementById('playerWrapper');w.classList.remove('is-fullscreen');isFullscreen=false;document.getElementById('fullscreenIcon').className='fas fa-expand';let html='';if(m.iframeCode){html=m.iframeCode}else if(m.iframeUrl){html=`<iframe src="${m.iframeUrl}" allowfullscreen style="position:absolute;inset:0;width:100%;height:100%;border:none"></iframe>`}w.innerHTML=html;currentPlayerUrl=m.iframeUrl||'';document.getElementById('playerModal').classList.remove('hidden');document.body.style.overflow='hidden'}
-function closePlayer(e){if(e&&e.target!==e.currentTarget)return;const w=document.getElementById('playerWrapper');if(isFullscreen){w.classList.remove('is-fullscreen');isFullscreen=false}w.innerHTML='';document.getElementById('playerModal').classList.add('hidden');document.body.style.overflow='';renderMovieGrid();updateStats()}
-function toggleFullscreen(){const w=document.getElementById('playerWrapper');isFullscreen=!isFullscreen;if(isFullscreen){w.classList.add('is-fullscreen');document.getElementById('fullscreenIcon').className='fas fa-compress'}else{w.classList.remove('is-fullscreen');document.getElementById('fullscreenIcon').className='fas fa-expand'}}
-function copyIframeUrl(){if(currentPlayerUrl){navigator.clipboard.writeText(currentPlayerUrl).then(()=>showToast('URL disalin!','success')).catch(()=>showToast('Gagal menyalin','error'))}else{showToast('Tidak ada URL','error')}}
+// ============ PLAYER ============
+function openPl(id){const m=movies.find(x=>x.id===id);if(!m)return;m.views++;saveM();document.getElementById('pT').textContent=m.title;document.getElementById('pC').textContent=m.category;document.getElementById('pD').textContent=m.desc||'';const w=document.getElementById('pW');w.classList.remove('fs');isFS=false;document.getElementById('fSI').className='fas fa-expand';let h='';if(m.iframeCode)h=m.iframeCode;else if(m.iframeUrl)h='<iframe src="'+m.iframeUrl+'" allowfullscreen style="position:absolute;inset:0;width:100%;height:100%;border:none"></iframe>';w.innerHTML=h;curURL=m.iframeUrl||'';document.getElementById('pM').classList.remove('hide');document.body.style.overflow='hidden'}
+function closePl(e){if(e&&e.target!==e.currentTarget)return;const w=document.getElementById('pW');if(isFS){w.classList.remove('fs');isFS=false}w.innerHTML='';document.getElementById('pM').classList.add('hide');document.body.style.overflow='';renGrid();updSt()}
+function togFS(){const w=document.getElementById('pW');isFS=!isFS;if(isFS){w.classList.add('fs');document.getElementById('fSI').className='fas fa-compress'}else{w.classList.remove('fs');document.getElementById('fSI').className='fas fa-expand'}}
+function cpURL(){if(curURL)navigator.clipboard.writeText(curURL).then(()=>toast('URL disalin!','success')).catch(()=>toast('Gagal','error'));else toast('Tidak ada URL','error')}
 
-// ===================== MANAGE =====================
-function renderManageTable(){const tb=document.getElementById('manageTableBody');const em=document.getElementById('manageEmpty');if(!movies.length){tb.innerHTML='';em.classList.remove('hidden');return}em.classList.add('hidden');tb.innerHTML=movies.map(m=>{const hi=!!(m.iframeUrl||m.iframeCode);return`<tr style="border-bottom:1px solid var(--border)"><td class="px-4 py-3"><div class="flex items-center gap-3"><img src="${m.poster||`https://picsum.photos/seed/${m.id}/80/120.jpg`}" class="w-10 h-14 rounded object-cover" onerror="this.src='https://picsum.photos/seed/${m.id}/80/120.jpg'"><div><div class="font-semibold text-sm">${m.title}</div><div class="text-xs" style="color:var(--muted)">${m.views.toLocaleString()} views &bull; ${m.rating}/10</div></div></div></td><td class="px-4 py-3 hidden sm:table-cell"><span class="text-xs px-2 py-1 rounded" style="background:var(--bg);color:var(--accent)">${m.category}</span></td><td class="px-4 py-3 hidden md:table-cell"><span class="text-xs" style="color:${hi?'var(--success)':'var(--danger)'}"><i class="fas fa-${hi?'check-circle':'times-circle'} mr-1"></i>${hi?'Ada':'Kosong'}</span></td><td class="px-4 py-3"><button onclick="toggleActive('${m.id}')" class="text-xs px-2 py-1 rounded font-semibold" style="background:${m.active?'rgba(45,212,160,0.15)':'rgba(232,64,87,0.15)'};color:${m.active?'var(--success)':'var(--danger)'}">${m.active?'Aktif':'Off'}</button></td><td class="px-4 py-3 text-right"><div class="flex items-center justify-end gap-1"><button onclick="openEditModal('${m.id}')" class="w-8 h-8 rounded flex items-center justify-center" style="background:var(--bg);color:var(--accent)" title="Edit"><i class="fas fa-pen text-xs"></i></button><button onclick="duplicateMovie('${m.id}')" class="w-8 h-8 rounded flex items-center justify-center" style="background:var(--bg);color:var(--muted)" title="Duplikat"><i class="fas fa-copy text-xs"></i></button><button onclick="showDeleteConfirm('${m.id}')" class="w-8 h-8 rounded flex items-center justify-center" style="background:var(--bg);color:var(--danger)" title="Hapus"><i class="fas fa-trash text-xs"></i></button></div></td></tr>`}).join('')}
-function toggleActive(id){const m=movies.find(x=>x.id===id);if(m){m.active=!m.active;saveMovies();renderManageTable();updateStats();showToast(`"${m.title}" ${m.active?'diaktifkan':'dinonaktifkan'}`,'info')}}
+// ============ MANAGE ============
+function renMT(){
+    const tb=document.getElementById('MTB'),em=document.getElementById('ME');
+    if(!movies.length){tb.innerHTML='';em.classList.remove('hide');return}em.classList.add('hide');
+    tb.innerHTML=movies.map(m=>'<tr style="border-bottom:1px solid var(--border)"><td class="px-3 py-2.5"><div class="flex items-center gap-2"><img src="'+(m.poster||'https://picsum.photos/seed/'+m.id+'/60/80.jpg')+'" class="w-8 h-11 rounded object-cover flex-shrink-0" onerror="this.src=\'https://picsum.photos/seed/'+m.id+'/60/80.jpg\'"><div class="min-w-0"><div class="font-semibold text-sm truncate">'+m.title+'</div><div class="text-xs" style="color:var(--muted)">'+m.views.toLocaleString()+' views</div></div></div></td><td class="px-3 py-2.5"><span class="text-xs px-1.5 py-0.5 rounded" style="background:var(--bg);color:var(--accent)">'+m.category+'</span></td><td class="px-3 py-2.5"><button onclick="togAct(\''+m.id+'\')" class="text-xs px-1.5 py-0.5 rounded font-semibold" style="background:'+(m.active?'rgba(45,212,160,.12)':'rgba(232,64,87,.12)')+';color:'+(m.active?'var(--success)':'var(--danger)')+'">'+(m.active?'Aktif':'Off')+'</button></td><td class="px-3 py-2.5 text-right"><div class="flex items-center justify-end gap-1"><button onclick="openEd(\''+m.id+'\')" class="w-7 h-7 rounded flex items-center justify-center" style="background:var(--bg);color:var(--accent)" title="Edit"><i class="fas fa-pen text-xs"></i></button><button onclick="dupMov(\''+m.id+'\')" class="w-7 h-7 rounded flex items-center justify-center" style="background:var(--bg);color:var(--muted)" title="Copy"><i class="fas fa-copy text-xs"></i></button><button onclick="showDel(\''+m.id+'\')" class="w-7 h-7 rounded flex items-center justify-center" style="background:var(--bg);color:var(--danger)" title="Hapus"><i class="fas fa-trash text-xs"></i></button></div></td></tr>').join('');
+}
+function togAct(id){const m=movies.find(x=>x.id===id);if(m){m.active=!m.active;saveM();renMT();updSt();toast('"'+m.title+'" '+(m.active?'diaktifkan':'dinonaktifkan'),'info')}}
 
-function showDeleteConfirm(id){const m=movies.find(x=>x.id===id);if(!m)return;const md=document.getElementById('deleteConfirmModal');md.innerHTML=`<div class="delete-confirm-overlay" onclick="closeDeleteConfirm()"><div class="modal-content w-full max-w-sm mx-4 p-6 rounded-xl text-center" style="background:var(--bg-elevated);border:1px solid var(--border)" onclick="event.stopPropagation()"><div class="w-14 h-14 mx-auto rounded-full flex items-center justify-center mb-4" style="background:rgba(232,64,87,0.15)"><i class="fas fa-trash-alt text-xl" style="color:var(--danger)"></i></div><h3 class="text-lg font-bold mb-2">Hapus Film?</h3><p class="text-sm mb-6" style="color:var(--muted)">"${m.title}" akan dihapus permanen.</p><div class="flex items-center gap-3 justify-center"><button onclick="confirmDelete('${m.id}')" class="px-6 py-2 rounded-lg font-bold text-sm" style="background:var(--danger);color:white">Hapus</button><button onclick="closeDeleteConfirm()" class="px-6 py-2 rounded-lg text-sm" style="background:var(--card);border:1px solid var(--border);color:var(--muted)">Batal</button></div></div></div>`;md.classList.remove('hidden')}
-function closeDeleteConfirm(){document.getElementById('deleteConfirmModal').classList.add('hidden')}
-function confirmDelete(id){const m=movies.find(x=>x.id===id);const t=m?m.title:'';movies=movies.filter(x=>x.id!==id);saveMovies();closeDeleteConfirm();renderManageTable();updateStats();renderMovieGrid();showToast(`"${t}" dihapus`,'error')}
-function duplicateMovie(id){const m=movies.find(x=>x.id===id);if(!m)return;movies.unshift({...m,id:genId(),title:m.title+' (Copy)',views:0,createdAt:Date.now()});saveMovies();renderManageTable();updateStats();showToast(`"${m.title}" diduplikasi`,'success')}
-function deleteAllMovies(){if(!movies.length){showToast('Tidak ada film','info');return}const md=document.getElementById('deleteConfirmModal');md.innerHTML=`<div class="delete-confirm-overlay" onclick="closeDeleteConfirm()"><div class="modal-content w-full max-w-sm mx-4 p-6 rounded-xl text-center" style="background:var(--bg-elevated);border:1px solid var(--border)" onclick="event.stopPropagation()"><div class="w-14 h-14 mx-auto rounded-full flex items-center justify-center mb-4" style="background:rgba(232,64,87,0.15)"><i class="fas fa-exclamation-triangle text-xl" style="color:var(--danger)"></i></div><h3 class="text-lg font-bold mb-2">Hapus Semua?</h3><p class="text-sm mb-1" style="color:var(--muted)">Semua ${movies.length} film akan dihapus.</p><p class="text-xs mb-6" style="color:var(--danger)">Tidak bisa dibatalkan!</p><div class="flex items-center gap-3 justify-center"><button onclick="confirmDeleteAll()" class="px-6 py-2 rounded-lg font-bold text-sm" style="background:var(--danger);color:white">Hapus Semua</button><button onclick="closeDeleteConfirm()" class="px-6 py-2 rounded-lg text-sm" style="background:var(--card);border:1px solid var(--border);color:var(--muted)">Batal</button></div></div></div>`;md.classList.remove('hidden')}
-function confirmDeleteAll(){movies=[];saveMovies();closeDeleteConfirm();renderManageTable();updateStats();renderMovieGrid();renderCategoryFilters();showToast('Semua film dihapus','error')}
+// Delete — FIXED: using separate function, no inline quotes issue
+function showDel(id){
+    const m=movies.find(x=>x.id===id);if(!m)return;
+    const md=document.getElementById('dCM');
+    md.innerHTML='<div class="dc" onclick="closeDelC()"><div class="mc2 w-full max-w-xs mx-3 p-5 rounded-xl text-center" style="background:var(--bg2);border:1px solid var(--border)" onclick="event.stopPropagation()"><div class="w-11 h-11 mx-auto rounded-full flex items-center justify-center mb-3" style="background:rgba(232,64,87,.12)"><i class="fas fa-trash-alt text-lg" style="color:var(--danger)"></i></div><h3 class="text-base font-bold mb-1.5">Hapus Film?</h3><p class="text-sm mb-4" style="color:var(--muted)">"'+m.title+'" akan dihapus permanen.</p><div class="flex items-center gap-2 justify-center"><button onclick="confirmDel(\''+m.id+'\')" class="px-5 py-2 rounded-lg font-bold text-sm" style="background:var(--danger);color:white">Hapus</button><button onclick="closeDelC()" class="px-4 py-2 rounded-lg text-sm" style="background:var(--card);border:1px solid var(--border);color:var(--muted)">Batal</button></div></div></div>';
+    md.classList.remove('hide');
+}
+function closeDelC(){document.getElementById('dCM').classList.add('hide');document.getElementById('dCM').innerHTML=''}
+function confirmDel(id){const m=movies.find(x=>x.id===id);const t=m?m.title:'';movies=movies.filter(x=>x.id!==id);saveM();closeDelC();renMT();updSt();renGrid();toast('"'+t+'" dihapus','error')}
 
-// ===================== EDIT =====================
-function openEditModal(id){const m=movies.find(x=>x.id===id);if(!m)return;document.getElementById('editId').value=m.id;document.getElementById('editTitle').value=m.title;document.getElementById('editIframe').value=m.iframeUrl||'';document.getElementById('editCategory').value=m.category;document.getElementById('editYear').value=m.year||'';document.getElementById('editPoster').value=m.poster||'';document.getElementById('editRating').value=m.rating||0;document.getElementById('editDesc').value=m.desc||'';document.getElementById('editIframeCode').value=m.iframeCode||'';document.getElementById('editModal').classList.remove('hidden');document.body.style.overflow='hidden'}
-function closeEditModal(){document.getElementById('editModal').classList.add('hidden');document.body.style.overflow=''}
-function handleEdit(e){e.preventDefault();const id=document.getElementById('editId').value;const m=movies.find(x=>x.id===id);if(!m)return;m.title=document.getElementById('editTitle').value.trim();m.iframeUrl=document.getElementById('editIframe').value.trim();m.category=document.getElementById('editCategory').value;m.year=parseInt(document.getElementById('editYear').value)||m.year;m.poster=document.getElementById('editPoster').value.trim();m.rating=parseInt(document.getElementById('editRating').value)||0;m.desc=document.getElementById('editDesc').value.trim();m.iframeCode=document.getElementById('editIframeCode').value.trim();saveMovies();closeEditModal();renderManageTable();renderMovieGrid();updateStats();showToast(`"${m.title}" diperbarui`,'success')}
+function dupMov(id){const m=movies.find(x=>x.id===id);if(!m)return;movies.unshift({...m,id:gId(),title:m.title+' (Copy)',views:0,createdAt:Date.now()});saveM();renMT();updSt();toast('"'+m.title+'" diduplikasi','success')}
 
-// ===================== EXPORT/IMPORT =====================
-function exportData(){const b=new Blob([JSON.stringify(movies,null,2)],{type:'application/json'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=`cinevault_${new Date().toISOString().slice(0,10)}.json`;a.click();URL.revokeObjectURL(u);showToast('Data diekspor!','success')}
-function importData(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=function(ev){try{const d=JSON.parse(ev.target.result);if(!Array.isArray(d))throw new Error('Format invalid');if(!d.every(m=>m.id&&m.title))throw new Error('Struktur invalid');movies=d;saveMovies();renderManageTable();updateStats();renderCategoryFilters();renderMovieGrid();showToast(`${d.length} film diimpor!`,'success')}catch(err){showToast('Gagal: '+err.message,'error')}};r.readAsText(f)}
+function delAll(){
+    if(!movies.length){toast('Kosong','info');return}
+    const md=document.getElementById('dCM');
+    md.innerHTML='<div class="dc" onclick="closeDelC()"><div class="mc2 w-full max-w-xs mx-3 p-5 rounded-xl text-center" style="background:var(--bg2);border:1px solid var(--border)" onclick="event.stopPropagation()"><div class="w-11 h-11 mx-auto rounded-full flex items-center justify-center mb-3" style="background:rgba(232,64,87,.12)"><i class="fas fa-exclamation-triangle text-lg" style="color:var(--danger)"></i></div><h3 class="text-base font-bold mb-1.5">Hapus Semua?</h3><p class="text-sm mb-4" style="color:var(--muted)">'+movies.length+' film akan dihapus permanen.</p><div class="flex items-center gap-2 justify-center"><button onclick="confDelAll()" class="px-5 py-2 rounded-lg font-bold text-sm" style="background:var(--danger);color:white">Hapus Semua</button><button onclick="closeDelC()" class="px-4 py-2 rounded-lg text-sm" style="background:var(--card);border:1px solid var(--border);color:var(--muted)">Batal</button></div></div></div>';
+    md.classList.remove('hide');
+}
+function confDelAll(){movies=[];saveM();closeDelC();renMT();updSt();renGrid();renCF();toast('Semua dihapus','error')}
 
-// ===================== KEYBOARD =====================
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closePlayer();closeEditModal();closeLoginModal();closeDeleteConfirm()}if((e.key==='f'||e.key==='F')&&!document.getElementById('playerModal').classList.contains('hidden')){toggleFullscreen()}});
+// ============ EDIT ============
+function openEd(id){const m=movies.find(x=>x.id===id);if(!m)return;document.getElementById('eId').value=m.id;document.getElementById('eT').value=m.title;document.getElementById('eI').value=m.iframeUrl||'';document.getElementById('eC').value=m.category;document.getElementById('eY').value=m.year||'';document.getElementById('eP').value=m.poster||'';document.getElementById('eR').value=m.rating||0;document.getElementById('eD').value=m.desc||'';document.getElementById('eIC').value=m.iframeCode||'';document.getElementById('eM').classList.remove('hide');document.body.style.overflow='hidden'}
+function closeEd(){document.getElementById('eM').classList.add('hide');document.body.style.overflow=''}
+function doEdit(e){e.preventDefault();const id=document.getElementById('eId').value,m=movies.find(x=>x.id===id);if(!m)return;m.title=document.getElementById('eT').value.trim();m.iframeUrl=document.getElementById('eI').value.trim();m.category=document.getElementById('eC').value;m.year=parseInt(document.getElementById('eY').value)||m.year;m.poster=document.getElementById('eP').value.trim();m.rating=parseInt(document.getElementById('eR').value)||0;m.desc=document.getElementById('eD').value.trim();m.iframeCode=document.getElementById('eIC').value.trim();saveM();closeEd();renMT();renGrid();updSt();toast('"'+m.title+'" diperbarui','success')}
 
-// ===================== INIT =====================
-loadMovies();
-loadBlockerConfig();
-checkAdminSession();
-initBlocker();
-updateShieldBadge();
-showSection('home');
+// ============ EXPORT / IMPORT / SHARE ============
+function expData(){const b=new Blob([JSON.stringify(movies,null,2)],{type:'application/json'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='cinevault_'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(u);toast('Data diekspor!','success')}
+function impData(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=function(ev){try{const d=JSON.parse(ev.target.result);if(!Array.isArray(d)||!d.every(m=>m.id&&m.title))throw new Error('Invalid');movies=d;saveM();renMT();updSt();renCF();renGrid();toast(d.length+' film diimpor!','success')}catch(err){toast('Gagal: '+err.message,'error')}};r.readAsText(f)}
+
+// Share via URL — encode movie data into URL hash
+function genShareLink(){
+    if(!movies.length){toast('Tidak ada data','info');return}
+    try{
+        // Compress: only essential fields
+        const slim=movies.map(m=>({t:m.title,u:m.iframeUrl,c:m.iframeCode,p:m.poster,k:m.category,y:m.year,r:m.rating,d:m.desc}));
+        const json=JSON.stringify(slim);
+        // Use base64
+        const b64=btoa(unescape(encodeURIComponent(json)));
+        const url=location.origin+location.pathname+'#data='+b64;
+        navigator.clipboard.writeText(url).then(()=>{
+            toast('Share link disalin! Buka di perangkat lain.','success');
+        }).catch(()=>{
+            // Fallback: show in prompt-like modal
+            showShareModal(url);
+        });
+    }catch(e){toast('Gagal membuat link','error')}
+}
+
+function showShareModal(url){
+    const md=document.getElementById('dCM');
+    md.innerHTML='<div class="dc" onclick="closeDelC()"><div class="mc2 w-full max-w-md mx-3 p-5 rounded-xl" style="background:var(--bg2);border:1px solid var(--border)" onclick="event.stopPropagation()"><h3 class="text-base font-bold mb-2">Share Link</h3><p class="text-xs mb-2" style="color:var(--muted)">Salin link ini dan buka di perangkat lain:</p><textarea readonly class="w-full px-3 py-2 rounded-lg text-xs resize-none font-mono" rows="3" style="background:var(--card);border:1px solid var(--border);color:var(--fg)">'+url+'</textarea><button onclick="closeDelC()" class="mt-3 px-4 py-1.5 rounded-lg text-sm font-semibold" style="background:var(--accent);color:black">Tutup</button></div></div>';
+    md.classList.remove('hide');
+}
+
+// Load shared data from URL hash on startup
+function loadSharedData(){
+    if(location.hash.startsWith('#data=')){
+        try{
+            const b64=location.hash.substring(6);
+            const json=decodeURIComponent(escape(atob(b64)));
+            const slim=JSON.parse(json);
+            if(Array.isArray(slim)&&slim.length){
+                // Map back to full movie objects
+                const imported=slim.map(s=>({id:gId(),title:s.t||'',iframeUrl:s.u||'',iframeCode:s.c||'',poster:s.p||'',category:s.k||'Action',year:s.y||2024,rating:s.r||5,desc:s.d||'',active:true,views:0,createdAt:Date.now()}));
+                // Merge: add only titles not already present
+                const existTitles=new Set(movies.map(m=>m.title.toLowerCase()));
+                const newMov=imported.filter(m=>!existTitles.has(m.title.toLowerCase()));
+                if(newMov.length){
+                    movies=[...newMov,...movies];
+                    saveM();
+                    toast(newMov.length+' film diterima via share link!','success');
+                }else{
+                    toast('Semua film sudah ada','info');
+                }
+                // Clean hash
+                history.replaceState(null,'',location.pathname);
+            }
+        }catch(e){/* invalid hash, ignore */}
+    }
+}
+
+// ============ KEYBOARD ============
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closePl();closeEd();closeLog();closeDelC()}if((e.key==='f'||e.key==='F')&&!document.getElementById('pM').classList.contains('hide'))togFS()});
+
+// ============ INIT ============
+loadM();
+loadBC();
+chkAd();
+loadSharedData(); // Check for shared data in URL
+initBL();
+updSB();
+goSec('home');
 </script>
 </body>
 </html>
